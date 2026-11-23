@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/supabase/admin";
 import { adminUser } from "@/lib/auth";
+import { getCampaign } from "@/lib/campaign";
+import { CampaignError } from "@/lib/campaign/store";
 import { demoMode } from "@/lib/demo";
-import { firstName, normEmail, normPhone, sameChild } from "@/lib/families";
 import { saveChildPhoto } from "@/lib/photos";
 
 export const dynamic = "force-dynamic";
@@ -12,13 +12,10 @@ export const maxDuration = 60;
 const list = z.array(z.string().trim().min(1).max(200)).max(40);
 const Child = z.object({
   fullName: z.string().trim().min(1).max(160),
-  age: z.number().int().min(0).max(21).nullable(),
+  age: z.number().int().min(0).max(120).nullable(),
   gender: z.enum(["Girl", "Boy", "Other"]).nullable(),
-  tops: z.string().trim().max(60),
-  bottoms: z.string().trim().max(60),
-  shoes: z.string().trim().max(60),
-  wants: list,
-  needs: list,
+  tops: z.string().trim().max(60), bottoms: z.string().trim().max(60), shoes: z.string().trim().max(60),
+  wants: list, needs: list,
   faves: list.refine((a) => a.length <= 3),
   favColor: z.string().trim().max(60),
   giftStore: z.string().trim().max(80),
@@ -26,92 +23,36 @@ const Child = z.object({
   photo: z.string().max(2_200_000).nullable(),
 });
 const Body = z.object({
-  family: z.object({
-    parentName: z.string().trim().min(1).max(160),
-    phone: z.string().trim().max(40),
-    email: z.string().trim().max(200),
-    story: z.string().trim().max(1000),
-    source: z.string().trim().max(200),
-  }),
-  photosOk: z.boolean(),
-  approve: z.boolean(),
+  family: z.object({ parentName: z.string().trim().min(1).max(160), phone: z.string().trim().max(40), email: z.string().trim().max(200), story: z.string().trim().max(1000), source: z.string().trim().max(200) }),
   children: z.array(Child).min(1).max(12),
 });
 
 /**
- * Saves one reviewed family. A family that already exists (same phone or email) is reused so siblings
- * from a second email join the same household. A child with the same first name and age is skipped.
+ * Saves one reviewed family read from an email. Children arrive as "Needs review": the season's maximum-age rule
+ * is applied on the way in, and approving and publishing happen afterwards in Households.
  */
 export async function POST(req: Request) {
-  if (!(await adminUser())) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
-  if (demoMode()) return NextResponse.json({ error: "Demo mode is read-only. Nothing was saved." }, { status: 403 });
+  const admin = await adminUser();
+  if (!admin) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Please check the fields." }, { status: 400 });
-  const { family, children, photosOk, approve } = parsed.data;
-
+  const { family, children } = parsed.data;
   try {
-    const phone = normPhone(family.phone);
-    const email = normEmail(family.email);
-    let familyId: string | null = null;
-    if (phone) {
-      const { data } = await db().from("families").select("id").eq("phone_norm", phone).limit(1);
-      familyId = data?.[0]?.id ?? null;
-    }
-    if (!familyId && email) {
-      const { data } = await db().from("families").select("id").eq("email_norm", email).limit(1);
-      familyId = data?.[0]?.id ?? null;
-    }
-    const merged = !!familyId;
-    if (!familyId) {
-      const { data, error } = await db()
-        .from("families")
-        .insert({ parent_name: family.parentName, phone: family.phone || null, phone_norm: phone || null, email: family.email || null, email_norm: email || null, story: family.story || null, source_label: family.source || null })
-        .select("id")
-        .single();
-      if (error) throw new Error(error.message);
-      familyId = data.id as string;
-    }
-
-    const { data: existing } = await db().from("children").select("full_name,age").eq("family_id", familyId);
-    const created: { id: string; no: number; name: string }[] = [];
-    const skipped: string[] = [];
-
-    for (const c of children) {
-      if ((existing || []).some((e) => sameChild(e, { full_name: c.fullName, age: c.age }))) {
-        skipped.push(c.fullName);
-        continue;
+    const campaign = await getCampaign();
+    const r = await campaign.enterHousehold(
+      { parentName: family.parentName, phone: family.phone, email: family.email, story: family.story, source: family.source, kids: children.map((c) => ({ fullName: c.fullName, age: c.age, gender: c.gender, tops: c.tops, bottoms: c.bottoms, shoes: c.shoes, wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.favColor, giftStore: c.giftStore, giftAmount: c.giftAmount })) },
+      admin.email,
+    );
+    if (!demoMode()) {
+      const byName = new Map(children.map((c) => [c.fullName, c]));
+      for (const made of r.children) {
+        const photo = byName.get(made.name)?.photo;
+        if (photo) await campaign.store.patchChild(made.id, { photo_path: await saveChildPhoto(made.id, photo) });
       }
-      const { data, error } = await db()
-        .from("children")
-        .insert({
-          family_id: familyId,
-          full_name: c.fullName,
-          first_name: firstName(c.fullName),
-          age: c.age,
-          gender: c.gender,
-          tops: c.tops || null,
-          bottoms: c.bottoms || null,
-          shoes: c.shoes || null,
-          wants: c.wants,
-          needs: c.needs,
-          faves: c.faves,
-          fav_color: c.favColor || null,
-          gift_store: c.giftStore || null,
-          gift_amount: c.giftStore ? c.giftAmount : null,
-          photo_public: !!(photosOk && c.photo),
-          approved: approve,
-        })
-        .select("id,no")
-        .single();
-      if (error) throw new Error(error.message);
-      if (c.photo) {
-        const path = await saveChildPhoto(data.id as string, c.photo);
-        await db().from("children").update({ photo_path: path }).eq("id", data.id);
-      }
-      created.push({ id: data.id as string, no: data.no as number, name: firstName(c.fullName) });
     }
-    return NextResponse.json({ ok: true, familyId, merged, created, skipped });
+    return NextResponse.json({ ok: true, familyId: r.familyId, merged: r.merged, created: r.children, skipped: r.skipped });
   } catch (e) {
+    if (e instanceof CampaignError) return NextResponse.json({ error: e.message }, { status: 422 });
     return NextResponse.json({ error: e instanceof Error ? e.message : "Save failed" }, { status: 500 });
   }
 }

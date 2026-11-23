@@ -59,9 +59,9 @@ export default function TreeBrowser({ kids }: { kids: PublicChild[] }) {
         <div className="grid">
           {list.map((c) => (
             <Link key={c.id} href={`/angel/${c.id}`} className={`orn${c.available ? "" : " taken"}`}>
-              <Ornament id={c.id} name={c.firstName} photo={c.hasPhoto} />
+              <Ornament id={c.id} name="★" photo={false} />
               <div className="no" style={{ textAlign: "center" }}>
-                No. {pad(c.no)} · <span className={`pill ${c.available ? "available" : "claimed"}`}>{c.available ? "Available" : "Sponsored"}</span>
+                Angel · <span className={`pill ${c.available ? "available" : "claimed"}`}>{c.available ? "Available" : "Sponsored"}</span>
               </div>
               <h3>
                 {c.firstName}

@@ -16,11 +16,10 @@ describe("public view of a child", () => {
     expect(p.siblings.length).toBeGreaterThan(0);
     expect(Object.keys(p.siblings[0]).sort()).toEqual(["age", "available", "firstName", "id"]);
   });
-  it("hides the photo unless an organizer made it public", () => {
-    const hidden = all.find((c) => c.photo_path && !c.photo_public)!;
+  it("never shows a photo publicly, even if the old public flag is set", () => {
     const shown = all.find((c) => c.photo_path && c.photo_public)!;
-    expect(toPublic(hidden, all).hasPhoto).toBe(false);
-    expect(toPublic(shown, all).hasPhoto).toBe(true);
+    expect(shown).toBeTruthy();
+    expect(toPublic(shown, all).hasPhoto).toBe(false);
   });
   it("leaves drafts off the tree", () => {
     const draft = { ...all[0], approved: false };

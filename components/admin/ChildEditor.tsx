@@ -60,8 +60,6 @@ export default function ChildEditor({ child, family }: { child: EditChild; famil
         fav_color: c.favColor || null,
         gift_store: c.giftStore || null,
         gift_amount: c.giftStore ? Number(c.giftAmount) || 25 : null,
-        photo_public: c.photoPublic,
-        approved: c.approved,
         organizer_notes: c.notes || null,
       },
       family: { parent_name: f.parentName, phone: f.phone || null, email: f.email || null, story: f.story || null },
@@ -102,8 +100,7 @@ export default function ChildEditor({ child, family }: { child: EditChild; famil
             {c.photo && <button className="btn ghost sm" onClick={removePhoto}>Remove photo</button>}
           </div>
         </div>
-        <label className="check"><input type="checkbox" checked={c.photoPublic} disabled={!c.photo} onChange={(e) => set({ photoPublic: e.target.checked })} /><span>Show this photo to sponsors (only with the parent&apos;s OK)</span></label>
-        <label className="check"><input type="checkbox" checked={c.approved} onChange={(e) => set({ approved: e.target.checked })} /><span>On the public tree (untick to hide as a draft)</span></label>
+        <p className="muted" style={{ fontSize: ".85rem", marginBottom: 10 }}>Photos are only ever shown to organizers. Decisions and publishing are on the household page.</p>
         <div className="three">
           <div className="field"><label className="lbl" htmlFor="fn">Full name (private)</label><input id="fn" value={c.fullName} onChange={(e) => set({ fullName: e.target.value })} /></div>
           <div className="field"><label className="lbl" htmlFor="ag">Age</label><input id="ag" type="number" min={0} max={21} value={c.age ?? ""} onChange={(e) => set({ age: e.target.value === "" ? null : Number(e.target.value) })} /></div>
