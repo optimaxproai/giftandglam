@@ -60,7 +60,10 @@ async function renderFile(file: File): Promise<{ canvases: HTMLCanvasElement[]; 
   if (file.type === "application/pdf" || name.endsWith(".pdf")) {
     const pdfjs = await import("pdfjs-dist");
     pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.js", import.meta.url).toString();
-    const pdf = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    const pdf = await pdfjs.getDocument({
+      data: new Uint8Array(await file.arrayBuffer()),
+      isEvalSupported: false,
+    }).promise;
     const canvases: HTMLCanvasElement[] = [];
     let text = "";
     for (let p = 1; p <= Math.min(pdf.numPages, MAX_PAGES); p++) {
@@ -142,7 +145,7 @@ export default function ImportClient() {
           email: f.email,
           story: f.story,
           photosOk: false,
-          approve: true,
+          approve: false,
           kids: f.children.map((c) => toKid(c, canvases)),
           state: "draft",
           msg: "",
@@ -313,7 +316,7 @@ export default function ImportClient() {
           ))}
 
           <div style={{ borderTop: "2px dotted var(--line)", marginTop: 14, paddingTop: 12 }}>
-            <label className="check"><input type="checkbox" checked={f.approve} onChange={(e) => setFam(f.key, { approve: e.target.checked })} /><span>Publish to the tree now. Untick to save as hidden drafts you can review later.</span></label>
+            <label className="check"><input type="checkbox" checked={f.approve} onChange={(e) => setFam(f.key, { approve: e.target.checked })} /><span>Publish to the tree now. Leave unchecked to save as hidden drafts.</span></label>
             <label className="check"><input type="checkbox" checked={f.photosOk} onChange={(e) => setFam(f.key, { photosOk: e.target.checked })} /><span>The parent agreed to show their children&apos;s photos to sponsors. Left unticked, photos stay with organizers only.</span></label>
             {f.msg && <div className={f.state === "saved" ? "ok" : "err"} role="status">{f.msg}</div>}
             <div className="acts">
