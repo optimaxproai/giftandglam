@@ -3,7 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/supabase/admin";
 import { demoMode } from "@/lib/demo";
 import { allow, clientIp } from "@/lib/rateLimit";
-import { DRIVE } from "@/lib/drive";
+import { DRIVE, giftDropOff } from "@/lib/drive";
+import { rememberSponsor, sponsorSession } from "@/lib/sponsor-session";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ async function sendConfirmation(to: string, name: string, token: string) {
         from: process.env.ANGEL_FROM_EMAIL || "Angel Tree <angeltree@optimaxproai.com>",
         to,
         subject: "Thank you for sponsoring an angel",
-        text: `Hi ${name.split(" ")[0]},\n\nThank you for sponsoring an angel. Your list, with wish lists and sizes, is here:\n${site}/mine/${token}\n\nPlease return the gifts unwrapped by ${DRIVE.returnByLabel}. The gift drive giveaway is ${DRIVE.giveawayLabel}.`,
+        text: `Hi ${name.split(" ")[0]},\n\nThank you for sponsoring an angel. Open your wish lists and sizes here:\n${site}/mine/${token}\n\n${DRIVE.giftSuggestion}\n\nPlease return the gifts unwrapped by ${DRIVE.returnByLabel}.\n\nGift Drop-Off\n${giftDropOff()}\n\nThe gift drive giveaway is ${DRIVE.giveawayLabel}.`,
       }),
     });
   } catch {
@@ -50,12 +51,17 @@ export async function POST(req: Request) {
     p_email: b.email,
     p_phone: b.phone || null,
     p_gift: !!b.gift,
+    p_sponsor_token: sponsorSession(),
   });
   if (error) {
     if (error.message.includes("child_unavailable")) return NextResponse.json({ error: "Someone just adopted this angel. Please pick another." }, { status: 409 });
+    if (error.message.includes("sponsor_session_required")) {
+      return NextResponse.json({ error: "Open your private My Angels link and choose Browse the tree to adopt another angel on this device. If you lost the link, contact an organizer." }, { status: 403 });
+    }
     return NextResponse.json({ error: "We couldn't save that. Please try again." }, { status: 500 });
   }
   const token = String(data);
+  rememberSponsor(token);
   await sendConfirmation(b.email, b.name, token);
   return NextResponse.json({ ok: true, token });
 }

@@ -46,8 +46,9 @@ export default function ClaimForm({ childId, name, gift }: { childId: string; na
 
   return (
     <form onSubmit={submit}>
+      <p className="muted" style={{ marginBottom: 12 }}>{DRIVE.giftSuggestion}</p>
       <div className="field"><label htmlFor="cl-name">Your name</label><input id="cl-name" name="name" autoComplete="name" required /></div>
-      <div className="field"><label htmlFor="cl-email">Email</label><input id="cl-email" name="email" type="email" autoComplete="email" required /><small>Used for pickup reminders. Never shown to other sponsors.</small></div>
+      <div className="field"><label htmlFor="cl-email">Email</label><input id="cl-email" name="email" type="email" autoComplete="email" required /><small>Used for drop-off instructions and reminders. Never shown to other sponsors.</small></div>
       <div className="field"><label htmlFor="cl-phone">Phone (optional)</label><input id="cl-phone" name="phone" type="tel" autoComplete="tel" /></div>
       <input name="website" tabIndex={-1} autoComplete="off" style={{ position: "absolute", left: "-9999px" }} aria-hidden="true" />
       {gift && (

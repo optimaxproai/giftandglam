@@ -5,7 +5,7 @@ import { Ornament } from "@/components/Ornament";
 import MineActions from "@/components/MineActions";
 import { allChildren, sponsorByToken } from "@/lib/data";
 import { toPublic, pad } from "@/lib/child";
-import { DRIVE, daysUntil } from "@/lib/drive";
+import { DRIVE, daysUntil, giftDropOff } from "@/lib/drive";
 import { STATUS_LABEL, STATUS_ORDER } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -24,8 +24,16 @@ export default async function Mine({ params }: { params: { token: string } }) {
           <h2>My angels</h2>
           <p className="muted">Hello {sponsor.name.split(" ")[0]}. Return gifts unwrapped by <b>{DRIVE.returnByLabel}</b>{dl >= 0 ? ` (${dl} days left)` : ""}.</p>
         </div>
-        <Link href="/" className="btn ghost sm">Browse the tree</Link>
+        <form action={`/mine/${params.token}/resume`} method="post">
+          <button type="submit" className="btn ghost sm">Browse the tree</button>
+        </form>
       </div>
+      {mine.length > 0 && (
+        <section className="panel" aria-labelledby="gift-drop-off" style={{ marginBottom: 16 }}>
+          <h3 id="gift-drop-off">Gift Drop-Off</h3>
+          <p style={{ whiteSpace: "pre-line" }}>{giftDropOff()}</p>
+        </section>
+      )}
       {mine.length === 0 ? (
         <div className="empty"><h3>No angels yet</h3><p>When you adopt an angel it shows up here.</p></div>
       ) : (

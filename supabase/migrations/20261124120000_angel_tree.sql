@@ -61,14 +61,21 @@ create index children_status_idx on public.children (status);
 alter table public.families enable row level security;
 alter table public.sponsors enable row level security;
 alter table public.children enable row level security;
-revoke all on public.families, public.sponsors, public.children from anon, authenticated;
+revoke all on public.families, public.sponsors, public.children from public, anon, authenticated;
+
+-- New Supabase projects do not grant Data API access to new tables by default.
+grant select, insert, update on public.families, public.children to service_role;
+grant select on public.sponsors to service_role;
+grant usage on sequence public.children_no_seq to service_role;
 
 -- Atomic first-come claim. Two sponsors tapping Adopt at once: exactly one wins.
-create or replace function public.claim_child(p_child uuid, p_name text, p_email text, p_phone text, p_gift boolean)
+create or replace function public.claim_child(
+  p_child uuid, p_name text, p_email text, p_phone text, p_gift boolean, p_sponsor_token text
+)
 returns text
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 declare
   v_sponsor public.sponsors;
@@ -79,7 +86,11 @@ begin
   on conflict (email_norm) do update
     set name = excluded.name,
         phone = coalesce(excluded.phone, public.sponsors.phone)
+    where public.sponsors.token = p_sponsor_token
   returning * into v_sponsor;
+  if not found then
+    raise exception 'sponsor_session_required';
+  end if;
 
   update public.children
      set status = 'claimed',
@@ -94,8 +105,8 @@ begin
   return v_sponsor.token;
 end;
 $$;
-revoke all on function public.claim_child(uuid, text, text, text, boolean) from public, anon, authenticated;
-grant execute on function public.claim_child(uuid, text, text, text, boolean) to service_role;
+revoke all on function public.claim_child(uuid, text, text, text, boolean, text) from public, anon, authenticated;
+grant execute on function public.claim_child(uuid, text, text, text, boolean, text) to service_role;
 
 -- Private bucket for child photos. Served only through /api/photo/[id], which checks photo_public.
 insert into storage.buckets (id, name, public) values ('child-photos', 'child-photos', false)
