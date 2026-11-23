@@ -205,3 +205,16 @@ tr:last-child td { border-bottom: 0; }
   .sheet { box-shadow: none !important; margin: 0 !important; page-break-after: always; break-after: page; }
   .sheet:last-child { page-break-after: auto; break-after: auto; }
 }
+/* ---- 2027 intake ---- */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.req { color: var(--cran); font-weight: 700; }
+.qa { margin: 0; display: grid; gap: 10px; }
+.qa dt { font-size: .76rem; color: var(--muted); font-weight: 600; }
+.qa dd { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.qcard { border: 2px solid var(--line); border-radius: 14px; background: #fff; padding: 14px; display: grid; gap: 10px; }
+.qcard .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.field.bad input, .field.bad textarea, .field.bad select { border-color: var(--cran); }
+.field .msg { color: var(--cran-deep); font-size: .85rem; font-weight: 600; }
+.childbox { border: 2px solid var(--line); border-radius: 18px; background: #fff; padding: 16px; margin-bottom: 14px; }
+.childbox > h3 { color: var(--pine); margin-bottom: 10px; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.sponsor-card { border: 2px dashed var(--gold-deep); border-radius: 16px; background: #fffdf5; padding: 14px; }

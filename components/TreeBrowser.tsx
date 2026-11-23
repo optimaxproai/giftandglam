@@ -19,7 +19,8 @@ export default function TreeBrowser({ kids }: { kids: PublicChild[] }) {
       if (gender && c.gender !== gender) return false;
       if (age) {
         const [lo, hi] = age.split("-").map(Number);
-        if (c.age == null || c.age < lo || c.age > hi) return false;
+        const a = c.age ?? c.ageLow ?? null;
+        if (a == null || a < lo || a > hi) return false;
       }
       if (s && ![c.firstName, ...c.wants, ...c.needs, ...c.faves].join(" ").toLowerCase().includes(s)) return false;
       return true;
@@ -66,8 +67,7 @@ export default function TreeBrowser({ kids }: { kids: PublicChild[] }) {
               <h3>
                 {c.firstName}
                 <span>
-                  {c.age != null ? `${c.age} · ` : ""}
-                  {c.gender || ""}
+                  {c.ageRange ? `Ages ${c.ageRange}` : `${c.age != null ? `${c.age} · ` : ""}${c.gender || ""}`}
                 </span>
               </h3>
               <ul>

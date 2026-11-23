@@ -1,4 +1,6 @@
 /** The drive's real dates (from the event flyers). Edit here once per year. */
+export const INTAKE_SEASON = "2027";
+
 export const DRIVE = {
   name: "Christmas Gift Drive 2026",
   tagline: "Help us bless a child this Christmas",

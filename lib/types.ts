@@ -73,6 +73,10 @@ export type PublicChild = {
   siblings: { id: string; firstName: string; age: number | null; available: boolean }[];
   /** The public label for this angel. Sponsors never see a name. */
   code: string;
+  /** 2027 intake cards only: an age range and approved sizes instead of an exact age. */
+  ageRange?: string;
+  ageLow?: number | null;
+  sizes?: string | null;
 };
 
 export const STATUS_LABEL: Record<Status, string> = {
