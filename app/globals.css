@@ -24,6 +24,7 @@ body {
   background: var(--frost);
   color: var(--ink);
   font-family: var(--font-body);
+  font-variant-numeric: lining-nums tabular-nums;
   font-size: 15px;
   line-height: 1.55;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -33,6 +34,7 @@ a { color: var(--cran); }
 h1, h2, h3 { margin: 0; line-height: 1.12; text-wrap: balance; }
 h1, h2 { font-family: var(--font-display); font-weight: 700; }
 h3 { font-family: var(--font-serif); font-weight: 600; }
+.numeric-text { font-family: var(--font-body); }
 p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
@@ -78,7 +80,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .tag { background: var(--snow); color: var(--ink); border-radius: 18px; padding: 18px; position: relative; box-shadow: 0 14px 40px rgba(0, 0, 0, .3); }
 .tag::before { content: ""; position: absolute; left: 22px; top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--night); border: 3px solid var(--gold); }
 .ribbon { height: 8px; border-radius: 99px; background: repeating-linear-gradient(135deg, var(--cran) 0 10px, #fff 10px 20px); margin-bottom: 14px; }
-.bignum { font-family: var(--font-display); font-size: 3rem; line-height: 1; color: var(--cran); font-weight: 700; }
+.bignum { font-family: var(--font-body); font-size: 3rem; line-height: 1; color: var(--cran); font-weight: 700; }
 .bar { height: 12px; border-radius: 99px; background: var(--cran-soft); overflow: hidden; margin-top: 12px; }
 .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--pine), #2f9a6c); border-radius: 99px; }
 .steps { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 9px; counter-reset: s; font-size: .88rem; }
@@ -168,7 +170,15 @@ tr:last-child td { border-bottom: 0; }
 .kpis { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(132px, 1fr); gap: 10px; overflow-x: auto; margin-bottom: 18px; }
 .kpi { background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 12px; min-width: 0; }
 .kpi small { display: block; color: var(--muted); font-size: .78rem; }
-.kpi b { font-family: var(--font-display); font-size: 2.2rem; line-height: 1.1; color: var(--pine); }
+.kpi b {
+  display: block;
+  font-family: var(--font-body);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--pine);
+  overflow-wrap: anywhere;
+}
 .kpi span { display: block; color: var(--muted); font-size: .78rem; }
 .empty { border: 2px dashed var(--line); border-radius: 18px; padding: 32px 20px; text-align: center; color: var(--muted); background: #fff; }
 .empty h3 { color: var(--ink); margin-bottom: 6px; }

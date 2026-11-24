@@ -37,7 +37,7 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
             <Ornament id={c.id} name="★" photo={false} big />
             <div>
               <span className="no">Angel</span>
-              <h2 style={{ fontSize: "2.6rem", color: "var(--pine)" }}>{c.firstName}</h2>
+              <h2 className="numeric-text" style={{ fontSize: "2.6rem", color: "var(--pine)" }}>{c.firstName}</h2>
               <p className="muted">{[c.age != null ? `${c.age} years old` : "", c.gender || ""].filter(Boolean).join(" · ")}</p>
             </div>
           </div>
