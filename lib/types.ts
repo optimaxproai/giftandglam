@@ -82,7 +82,7 @@ export type PublicChild = {
 export const STATUS_LABEL: Record<Status, string> = {
   available: "Available",
   claimed: "Sponsored",
-  purchased: "Gifts bought",
+  purchased: "Shopping complete",
   returned: "Gifts returned",
   given: "Given out",
 };

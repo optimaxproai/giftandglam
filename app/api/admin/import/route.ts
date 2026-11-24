@@ -14,6 +14,7 @@ const list = z.array(z.string().trim().min(1).max(200)).max(40);
 const Child = z.object({
   fullName: z.string().trim().min(1).max(160),
   age: z.number().int().min(0).max(120).nullable(),
+  ageUnsure:z.boolean().optional(),
   gender: z.enum(["Girl", "Boy", "Other"]).nullable(),
   tops: z.string().trim().max(60), bottoms: z.string().trim().max(60), shoes: z.string().trim().max(60),
   wants: list, needs: list,
@@ -43,7 +44,7 @@ export async function POST(req: Request) {
   try {
     const campaign = await getCampaign();
     const r = await campaign.enterHousehold(
-      { parentName: family.parentName, phone: family.phone, email: family.email, story: family.story, source: family.source, kids: children.map((c) => ({ fullName: c.fullName, age: c.age, gender: c.gender, tops: c.tops, bottoms: c.bottoms, shoes: c.shoes, wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.favColor, giftStore: c.giftStore, giftAmount: c.giftAmount, giftCards: c.giftCards, notes: c.notes })) },
+      { parentName: family.parentName, phone: family.phone, email: family.email, story: family.story, source: family.source, kids: children.map((c) => ({ fullName: c.fullName, age: c.age, ageUnsure:c.ageUnsure, gender: c.gender, tops: c.tops, bottoms: c.bottoms, shoes: c.shoes, wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.favColor, giftStore: c.giftStore, giftAmount: c.giftAmount, giftCards: c.giftCards, notes: c.notes })) },
       admin.email,
     );
     if (!demoMode()) {

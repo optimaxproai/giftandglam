@@ -1,10 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import {useRouter} from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import type { PublicChild } from "@/lib/types";
 import { layoutAngelTree, treeColor, treeMatches, type TreeFilters } from "@/lib/treeLayout";
 import styles from "./InteractiveTree.module.css";
+import Celebration from "./Celebration";
+import ClaimForm from "./ClaimForm";
 
 const fullTree: TreeFilters = { query: "", age: "", gender: "", availableOnly: false };
 
@@ -12,7 +14,8 @@ function GiftList({ title, items }: { title: string; items: string[] }) {
   return <div><h4 className={styles.listTitle}>{title}</h4>{items.length ? <ul className="list">{items.map((item, i) => <li key={i}>{item}</li>)}</ul> : <p className="muted">Not listed</p>}</div>;
 }
 
-function TreeDetail({ child, hidden }: { child: PublicChild | undefined; hidden: boolean }) {
+function TreeDetail({ child, hidden,dropOff,onClaim }: { child: PublicChild | undefined; hidden: boolean;dropOff:string;onClaim:()=>void }) {
+  const [adopting,setAdopting]=useState(false);
   if (!child) return <><h3>Find your angel</h3><p className="muted">Select any ornament to see the angel’s age, sizes, wants, needs and interests. Then choose to sponsor them.</p></>;
   const gifts = (child as PublicChild & { gifts?: { store: string; amount: number }[] }).gifts ?? (child.gift ? [child.gift] : []);
   return <>
@@ -29,15 +32,18 @@ function TreeDetail({ child, hidden }: { child: PublicChild | undefined; hidden:
     <GiftList title="Interests" items={child.faves} />
     {gifts.length > 0 && <GiftList title="Optional gift cards" items={gifts.map((g) => `$${g.amount} ${g.store}`)} />}
     {child.siblings.length > 0 && <p className="muted">{child.siblings.length} sibling{child.siblings.length === 1 ? " is" : "s are"} also on the tree. See the full angel page for details.</p>}
-    {child.available ? <Link href={`/angel/${child.id}`} className="btn">View wish list &amp; adopt {child.code}</Link> : <p className="ok">This angel has a sponsor. Thank you for helping make Christmas bright!</p>}
+    {adopting?<div className={styles.claimSection}><ClaimForm childId={child.id} name={child.code} gifts={child.gifts} child={child} dropOff={dropOff} onClaim={onClaim}/></div>:child.available?<button type="button" className="btn" onClick={()=>setAdopting(true)}>Adopt {child.code}</button>:<p className="ok">This angel has a sponsor. Thank you for helping make Christmas bright!</p>}
   </>;
 }
 
-export default function InteractiveTree({ kids }: { kids: PublicChild[] }) {
+export default function InteractiveTree({ kids,dropOff }: { kids: PublicChild[];dropOff:string }) {
+  const router=useRouter();
   const [filters, setFilters] = useState<TreeFilters>(fullTree);
   const [selected, setSelected] = useState<string | null>(null);
+  const [burst,setBurst]=useState(0);
+  const [claimed,setClaimed]=useState<string[]>([]);
   const detail = useRef<HTMLElement>(null);
-  const ordered = useMemo(() => [...kids].sort((a, b) => a.no - b.no || a.id.localeCompare(b.id)), [kids]);
+  const ordered = useMemo(() => kids.map(c=>claimed.includes(c.id)?{...c,available:false,status:"claimed" as const}:c).sort((a, b) => a.no - b.no || a.id.localeCompare(b.id)), [kids,claimed]);
   const layout = useMemo(() => layoutAngelTree(ordered.length), [ordered.length]);
   const shown = useMemo(() => new Set(ordered.filter((child) => treeMatches(child, filters)).map((child) => child.id)), [ordered, filters]);
   const child = ordered.find((c) => c.id === selected);
@@ -45,6 +51,7 @@ export default function InteractiveTree({ kids }: { kids: PublicChild[] }) {
 
   function select(id: string) {
     setSelected(id);
+    setBurst(n=>n+1);
     if (window.matchMedia("(max-width: 760px)").matches) detail.current?.scrollIntoView({ block: "start", behavior: "auto" });
   }
 
@@ -64,25 +71,22 @@ export default function InteractiveTree({ kids }: { kids: PublicChild[] }) {
       <div className={styles.scene}>
         <h3>Our Angel Tree</h3><p className={styles.subtitle}>{kids.length ? "Choose an ornament to make Christmas bright." : "The tree is being decorated"}</p>
         <div className={styles.viewport} role="region" aria-label="Tree ornaments (scroll to see all if needed)" tabIndex={0}>
-          <div className={styles.tree} style={{ minWidth: layout.minWidth, minHeight: layout.minHeight }}>
-            <div className={styles.floor} aria-hidden="true" /><div className={styles.trunk} aria-hidden="true" />
-            {Array.from({ length: 6 }, (_, i) => <div key={i} className={styles.branch} aria-hidden="true" style={{ top: `${7 + i * 10.7}%`, width: `${34 + i * 12.3}%` }} />)}
-            {Array.from({ length: 44 }, (_, i) => { const y = 20 + (i * 17) % 63; const span = 16 + (y - 20) * 0.8; return <i key={i} className={styles.light} aria-hidden="true" style={{ left: `${50 - span / 2 + ((i * 73) % 101) / 100 * span}%`, top: `${y}%` }} />; })}
-            <div className={styles.star} aria-hidden="true">★</div>
+          <div className={`${styles.tree} ${styles.cinematic}`} style={{ minWidth: layout.minWidth, minHeight: Math.max(540,layout.minHeight) }}>
+            {Array.from({length:20},(_,i)=><i className={styles.flake} key={i} aria-hidden="true" style={{left:`${i*47%100}%`,animationDuration:`${10+i%6}s`,animationDelay:`-${i*2%15}s`,width:2+i%4,height:2+i%4}}/>)}
             {ordered.map((c, i) => {
               if (!shown.has(c.id)) return null;
               const point = layout.points[i];
               const active = c.id === selected;
               const label = `${c.code}, ${c.age === null ? "age not stated" : `${c.age} years old`}, ${c.gender || "gender not stated"}, ${c.available ? "available" : "sponsored"}`;
               const [prefix, ...rest] = c.code.split("-");
-              return <button key={c.id} type="button" className={`${styles.ornament} ${styles[treeColor(c, active)]} ${active ? styles.active : ""}`} style={{ left: `${point.x}%`, top: `${point.y}%` }} aria-pressed={active} aria-label={label} title={label} aria-controls="selected-angel" onClick={() => select(c.id)}><span>{rest.length ? <>{prefix}<br />{rest.join("-")}</> : c.code}</span></button>;
+              return <button key={c.id} type="button" className={`${styles.ornament} ${styles[treeColor(c, active)]} ${active ? styles.active : ""}`} style={{ left: `${point.x}%`, top: `${point.y}%` }} aria-pressed={active} aria-label={label} title={label} aria-controls="selected-angel" onClick={() => select(c.id)}><span>{rest.length ? <>{prefix}<br />{rest.join("-")}</> : c.code}</span>{active&&burst>0&&c.available&&<Celebration key={burst} mode="sparkles"/>}</button>;
             })}
             {kids.length > 0 && shown.size === 0 && <div className={styles.emptyOverlay}>No angels match your filters. <button type="button" onClick={() => setFilters(fullTree)}>Show full tree</button></div>}
           </div>
         </div>
-        <p className={styles.treeNote}>{kids.length ? `${shown.size} ornament${shown.size === 1 ? "" : "s"} shown · ${kids.length} angels in the full tree` : "Angels will appear here soon. Check back shortly."}</p>
+        <p className={styles.treeNote} aria-live="polite">{child?`✦ ${child.code} ${child.available?"selected! See their wish list below.":"has a sponsor. Thank you!"}`:kids.length ? `${shown.size} ornament${shown.size === 1 ? "" : "s"} shown · ${kids.length} angels in the full tree` : "Angels will appear here soon. Check back shortly."}</p>
       </div>
-      <aside id="selected-angel" ref={detail} aria-label="Selected angel details" className={`panel ${styles.detail}`}><TreeDetail child={child} hidden={!!child && !shown.has(child.id)} /></aside>
+      <aside id="selected-angel" ref={detail} aria-label="Selected angel details" className={`panel ${styles.detail}`}><TreeDetail key={child?.id||"none"} child={child} hidden={!!child && !shown.has(child.id)} dropOff={dropOff} onClaim={()=>{if(child){setClaimed(prev=>prev.includes(child.id)?prev:[...prev,child.id]);setFilters(fullTree);router.refresh();}}}/></aside>
     </div>
   </section>;
 }

@@ -92,6 +92,8 @@ export const ParsedSchema = z.object({
 export type DraftChild = {
   fullName: string;
   age: number | null;
+  ageUnsure?: boolean;
+  notes?: string;
   gender: "Girl" | "Boy" | "Other" | null;
   tops: string;
   bottoms: string;
@@ -105,7 +107,7 @@ export type DraftChild = {
   giftCards?: { store: string; amount: number }[];
   photo: { page: number; box: { x: number; y: number; w: number; h: number } } | null;
 };
-export type DraftFamily = { parentName: string; phone: string; email: string; story: string; children: DraftChild[] };
+export type DraftFamily = { parentName: string; phone: string; email: string; story: string; children: DraftChild[]; source?: string };
 
 const GIFT_ITEM = /^(.*?)\s*gift\s*cards?$/i;
 const clean = (s?: string | null) => (s || "").replace(/\s+/g, " ").trim();

@@ -3,11 +3,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { DRIVE } from "@/lib/drive";
 import type { GiftCard } from "@/lib/giftCards";
+import Celebration from "./Celebration";
+import type { PublicChild } from "@/lib/types";
 
-export default function ClaimForm({ childId, name, gifts }: { childId: string; name: string; gifts: GiftCard[] }) {
+export default function ClaimForm({ childId, name, gifts, child, dropOff,onClaim }: { childId: string; name: string; gifts: GiftCard[]; child: PublicChild; dropOff: string; onClaim?:()=>void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [token, setToken] = useState("");
+  const [emailStatus,setEmailStatus]=useState("");
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,7 +32,7 @@ export default function ClaimForm({ childId, name, gifts }: { childId: string; n
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) setErr(j.error || "Something went wrong. Please try again.");
-      else setToken(j.token);
+      else { setToken(j.token);setEmailStatus(j.emailStatus||"unavailable");onClaim?.(); }
     } catch {
       setErr("We couldn't reach the tree. Check your connection and try again.");
     }
@@ -39,9 +42,14 @@ export default function ClaimForm({ childId, name, gifts }: { childId: string; n
   if (token)
     return (
       <div>
-        <div className="ok"><b>Thank you!</b> You are sponsoring {name}.</div>
-        <p style={{ margin: "10px 0" }}>Save this link. It is your list of angels, with {name}&apos;s wish list and the return date ({DRIVE.returnByLabel}).</p>
-        <Link className="btn" href={`/mine/${token}`}>Open my angels</Link>
+        <Celebration mode="confetti"/>
+        <h2 style={{color:"var(--pine)",fontSize:"2rem"}}>Thank you for making Christmas brighter!</h2>
+        <div className="ok"><b>You are sponsoring {name}.</b> {emailStatus==="sent"?"A confirmation email with your angel’s list and private link was accepted for sending.":emailStatus==="demo"?"This preview does not send email.":"We couldn't send the confirmation email. Save your private link below and contact the organizer if needed."}</div>
+        <div className="fact"><small>Your angel code</small><b>{child.code}</b></div>
+        <h3 style={{marginBlock:12}}>Everything you need to do</h3><ul className="list"><li>{DRIVE.giftSuggestion}</li><li>Open My Angels to check off each individual gift purchased and select Done shopping.</li><li>Return all gifts unwrapped by {DRIVE.returnByLabel}, labelled {child.code}.</li><li style={{whiteSpace:"pre-line"}}>{dropOff}</li><li>Giveaway: {DRIVE.giveawayLabel}.</li><li>If your plans change, <a href="mailto:paradigmgiftdrive@gmail.com">contact the organizer</a>.</li></ul>
+        <p style={{ margin: "10px 0" }}>Save your private link. My Angels includes your shopping checklist, downloadable list and printable gift bag label.</p>
+        <Link className="btn" href={`/mine/${token}`}>Open My Angels</Link>
+        <p className="muted" style={{marginTop:10}}>Lost the link later? Use your angel code and email on <Link href="/mine">My Angels</Link>.</p>
       </div>
     );
 

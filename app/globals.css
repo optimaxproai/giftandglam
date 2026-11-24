@@ -38,6 +38,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .wrap { max-width: 1120px; margin: 0 auto; padding-block: 0 56px; }
 .muted { color: var(--muted); }
+.donation-purpose{display:grid;gap:6px;text-align:left;cursor:pointer;color:var(--ink);min-height:110px}.donation-purpose b{color:var(--pine);font-size:1.1rem}.donation-purpose span{color:var(--muted);font-size:.89rem}.donation-purpose.chosen{border:2px solid var(--pine);background:var(--pine-soft)}
 
 /* ---- hero: night sky, garland, snow ---- */
 .sky {
@@ -72,6 +73,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .hero h1 { font-size: clamp(2.5rem, 7vw, 4.4rem); }
 .hero h1 em { font-style: normal; color: var(--gold); }
 .hero .lead { margin-top: 12px; color: #d3eadf; max-width: 50ch; font-size: 1.02rem; }
+.sky:has(.campaign-hero) .sky-in{max-width:1500px}.hero.campaign-hero{grid-template-columns:minmax(250px,32fr) minmax(0,68fr);align-items:start;gap:clamp(20px,3vw,42px);margin-top:24px}.campaign-hero h1{font-size:clamp(2.6rem,5vw,4.8rem);line-height:1.02}.campaign-hero h1 em{display:block}.campaign-donate{width:100%;max-width:400px}.campaign-progress{margin-top:25px}.campaign-tree{min-width:0}.campaign-thanks{text-align:center;font-family:var(--font-display);color:var(--pine);font-size:1.6rem;margin:22px 0}.gift-check{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--line);padding:7px 0}.gift-bag-label{border:2px dashed var(--line);padding:10px;margin-top:12px;text-align:center;display:grid;gap:4px}.gift-bag-label b{font-size:1.4rem;letter-spacing:.08em}.gift-management select{max-width:100%;border:1px solid var(--line);border-radius:8px;padding:5px;background:#fff}.gift-kpis{grid-template-columns:repeat(auto-fit,minmax(125px,1fr))}.sponsor-checklist{color:var(--ink)}@media(max-width:760px){.hero.campaign-hero{grid-template-columns:1fr}.campaign-hero h1{font-size:clamp(2.8rem,9vw,4rem)}.campaign-progress{margin-top:20px}}@media print{.sponsor-checklist .gift-bag-label{break-inside:avoid}.sponsor-checklist .no-print{display:none!important}.gift-bag-label{font-size:14px}}
 .tag { background: var(--snow); color: var(--ink); border-radius: 18px; padding: 18px; position: relative; box-shadow: 0 14px 40px rgba(0, 0, 0, .3); }
 .tag::before { content: ""; position: absolute; left: 22px; top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--night); border: 3px solid var(--gold); }
 .ribbon { height: 8px; border-radius: 99px; background: repeating-linear-gradient(135deg, var(--cran) 0 10px, #fff 10px 20px); margin-bottom: 14px; }

@@ -80,6 +80,8 @@ export function SiteShell({ children, hero, admin = false }: { children: ReactNo
                   <Link href="/admin/import">Import</Link>
                   <Link href="/admin/children">Children</Link>
                   <Link href="/admin/sponsors">Sponsors</Link>
+                  <Link href="/admin/gifts">Gifts Management</Link>
+                  <Link href="/admin/donations">Donations</Link>
                   <Link href="/admin/print">Print labels</Link>
                   <Link href="/admin/account">Account</Link>
                   <Link href="/">View tree</Link>
@@ -87,6 +89,7 @@ export function SiteShell({ children, hero, admin = false }: { children: ReactNo
               ) : (
                 <>
                   <Link href="/">The tree</Link>
+                  <Link href="/mine">My Angels</Link>
                   <Link href="/admin">Organizers</Link>
                 </>
               )}

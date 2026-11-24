@@ -3,25 +3,30 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/Festive";
 import { Ornament } from "@/components/Ornament";
 import MineActions from "@/components/MineActions";
+import SponsorChecklist from "@/components/SponsorChecklist";
+import { getCampaign } from "@/lib/campaign";
+import { sponsorInstructions } from "@/lib/sponsorMail";
 import { allChildren, sponsorByToken } from "@/lib/data";
 import { toPublic, pad } from "@/lib/child";
 import { DRIVE, daysUntil, giftDropOff } from "@/lib/drive";
 import { STATUS_LABEL, STATUS_ORDER } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
+export const metadata = { title:"My Angels | Gift & Glam",referrer:"no-referrer" as const };
 
 export default async function Mine({ params }: { params: { token: string } }) {
   const sponsor = await sponsorByToken(params.token);
   if (!sponsor) notFound();
   const all = await allChildren();
   const mine = all.filter((c) => c.sponsor_id === sponsor.id);
+  const gifts=await (await getCampaign()).store.listGiftItems(mine.map(c=>c.id));
   const dl = daysUntil(DRIVE.returnBy);
 
   return (
     <SiteShell>
       <div className="page-h">
         <div>
-          <h2>My angels</h2>
+          <h2>My Angels</h2>
           <p className="muted">Hello {sponsor.name.split(" ")[0]}. Return gifts unwrapped by <b>{DRIVE.returnByLabel}</b>{dl >= 0 ? ` (${dl} days left)` : ""}.</p>
         </div>
         <form action={`/mine/${params.token}/resume`} method="post">
@@ -31,7 +36,7 @@ export default async function Mine({ params }: { params: { token: string } }) {
       {mine.length > 0 && (
         <section className="panel" aria-labelledby="gift-drop-off" style={{ marginBottom: 16 }}>
           <h3 id="gift-drop-off">Gift Drop-Off</h3>
-          <p style={{ whiteSpace: "pre-line" }}>{giftDropOff()}</p>
+          <p style={{ whiteSpace: "pre-line" }}>{giftDropOff()}</p><p style={{marginTop:8}}>Giveaway: {DRIVE.giveawayLabel}. Return all gifts unwrapped, labelled with the angel code. If your plans change, <a href="mailto:paradigmgiftdrive@gmail.com">contact the organizer</a>.</p>
         </section>
       )}
       {mine.length === 0 ? (
@@ -49,17 +54,14 @@ export default async function Mine({ params }: { params: { token: string } }) {
                 <div style={{ display: "flex", gap: 4 }} aria-hidden="true">
                   {STATUS_ORDER.slice(1).map((s, i) => <i key={s} style={{ flex: 1, height: 6, borderRadius: 99, background: i < idx ? "var(--pine)" : "var(--line)" }} />)}
                 </div>
-                <div className="two" style={{ fontSize: ".86rem" }}>
-                  <div><b>Wants</b><ul className="list">{c.wants.map((w) => <li key={w}>{w}</li>)}</ul></div>
-                  <div><b>Needs</b><ul className="list">{c.needs.map((w) => <li key={w}>{w}</li>)}</ul></div>
-                </div>
-                {c.gifts.length > 0 && <div><b>Gift cards ({row.gift_card_status === "received" ? "received" : row.gift_card_status === "pledged" ? "pledged" : "optional"})</b><ul className="list">{c.gifts.map((gift, index) => <li key={index}>${gift.amount} {gift.store}</li>)}</ul></div>}
+                <SponsorChecklist token={params.token} items={gifts.filter(g=>g.child_id===c.id&&g.active)} editable={row.status==="claimed"||row.status==="purchased"} code={c.code} instructions={sponsorInstructions(c)}/>
+                <p className="muted">Sizes: Shirt {c.tops||"?"} · Pants {c.bottoms||"?"} · Shoes {c.shoes||"?"}</p>
                 {c.siblings.length > 0 && (
                   <p className="muted" style={{ fontSize: ".84rem", textAlign: "center" }}>
                     Siblings on the tree: {c.siblings.map((s) => <Link key={s.id} href={`/angel/${s.id}`}>{s.firstName}</Link>).reduce<React.ReactNode[]>((a, x, i) => (i ? [...a, ", ", x] : [x]), [])}
                   </p>
                 )}
-                <MineActions token={params.token} childId={c.id} status={row.status} />
+                <div className="no-print"><MineActions token={params.token} childId={c.id} status={row.status} /></div>
               </div>
             );
           })}

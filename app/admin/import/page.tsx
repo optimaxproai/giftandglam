@@ -1,6 +1,7 @@
 import { SiteShell } from "@/components/Festive";
 import ImportClient from "@/components/admin/ImportClient";
 import { requireAdmin } from "@/lib/auth";
+import {demoMode} from "@/lib/demo";
 
 export const dynamic = "force-dynamic";
 
@@ -10,13 +11,13 @@ export default async function ImportPage() {
     <SiteShell admin>
       <div className="page-h">
         <div>
-          <h2>Import family emails</h2>
+          <h2>Import family applications</h2>
           <p className="muted" style={{ maxWidth: "60ch" }}>
-            Upload the printed email. Claude reads it, finds every child (siblings stay together under one parent), and crops each child&apos;s photo from the page. You review everything before it goes on the tree.
+            Upload a CSV for local, deterministic reading of each child and household. PDF and email reading uses an external AI service; review all results before saving. Choose CSV or manual entry for confidential intake without AI. Nothing goes on the tree until the organizer approves and publishes it.
           </p>
         </div>
       </div>
-      <ImportClient />
+      <ImportClient demo={demoMode()}/>
     </SiteShell>
   );
 }

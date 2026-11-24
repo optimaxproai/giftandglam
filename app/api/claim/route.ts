@@ -3,8 +3,10 @@ import { z } from "zod";
 import { getCampaign } from "@/lib/campaign";
 import { CampaignError } from "@/lib/campaign/store";
 import { allow, clientIp } from "@/lib/rateLimit";
-import { DRIVE, giftDropOff } from "@/lib/drive";
 import { rememberSponsor, sponsorSession } from "@/lib/sponsor-session";
+import { sendSponsorMail, sponsorInstructions, sponsorLink } from "@/lib/sponsorMail";
+import { toPublic } from "@/lib/child";
+import {demoMode} from "@/lib/demo";
 
 export const dynamic = "force-dynamic";
 
@@ -17,27 +19,6 @@ const Body = z.object({
   website: z.string().optional(), // honeypot
 });
 
-/** Sponsor communications name the angel by code only. */
-async function sendConfirmation(to: string, name: string, token: string, code: string) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return;
-  const site = process.env.NEXT_PUBLIC_SITE_URL || "";
-  try {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },
-      body: JSON.stringify({
-        from: process.env.ANGEL_FROM_EMAIL || "Angel Tree <angeltree@optimaxproai.com>",
-        to,
-        subject: `Thank you for sponsoring Angel ${code}`,
-        text: `Hi ${name.split(" ")[0]},\n\nThank you for sponsoring Angel ${code}. Open the wish list and sizes here:\n${site}/mine/${token}\n\n${DRIVE.giftSuggestion}\n\nPlease return the gifts unwrapped by ${DRIVE.returnByLabel}.\n\nGift Drop-Off\n${giftDropOff()}\n\nThe gift drive giveaway is ${DRIVE.giveawayLabel}.`,
-      }),
-    });
-  } catch {
-    /* the claim already succeeded; the on-screen link is the source of truth */
-  }
-}
-
 export async function POST(req: Request) {
   if (!allow(`claim:${clientIp(req)}`, 8, 10 * 60_000)) return NextResponse.json({ error: "Too many tries. Please wait a few minutes." }, { status: 429 });
   const parsed = Body.safeParse(await req.json().catch(() => null));
@@ -49,13 +30,16 @@ export async function POST(req: Request) {
   try {
     const token = await store.claim({ childId: b.childId, name: b.name, email: b.email, phone: b.phone || null, gift: !!b.gift, sponsorToken: sponsorSession() });
     rememberSponsor(token);
-    const code = (await store.list()).find((c) => c.id === b.childId)?.angel_code || "";
-    await sendConfirmation(b.email, b.name, token, code);
-    return NextResponse.json({ ok: true, token });
+    let emailStatus:"sent"|"unavailable"|"demo"=demoMode()?"demo":"unavailable";
+    try {
+      const all=await store.list(),row=all.find(c=>c.id===b.childId),link=sponsorLink(token);
+      if(row&&link){const c=toPublic(row,all);emailStatus=await sendSponsorMail(b.email,`Gift & Glam: thank you for adopting ${c.code}`,`Hi ${b.name.split(" ")[0]},\n\nThank you for making Christmas brighter!\n\n${sponsorInstructions(c)}\n\nOpen your private My Angels checklist to mark purchased items and select Done shopping:\n${link}\n\nKeep this link private.`);}
+    } catch { /* claim already succeeded; never turn an email failure into a failed claim */ }
+    return NextResponse.json({ ok: true, token, emailStatus });
   } catch (e) {
     if (e instanceof CampaignError && e.code === "unavailable") return NextResponse.json({ error: "Someone just adopted this angel. Please pick another." }, { status: 409 });
     if (e instanceof CampaignError && e.code === "session") {
-      return NextResponse.json({ error: "Open your private My Angels link and choose Browse the tree to adopt another angel on this device. If you lost the link, contact an organizer." }, { status: 403 });
+      return NextResponse.json({ error: "Open your private My Angels link and choose Browse the tree to adopt another angel on this device. If you lost the link, request a new one from My Angels." }, { status: 403 });
     }
     return NextResponse.json({ error: "We couldn't save that. Please try again." }, { status: 500 });
   }

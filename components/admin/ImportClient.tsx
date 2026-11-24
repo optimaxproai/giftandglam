@@ -7,12 +7,14 @@ import ItemListEditor, { cleanListItems } from "./ItemListEditor";
 import SizeField from "./SizeField";
 import GiftCardEditor from "./GiftCardEditor";
 import { cleanGiftCards, type GiftCard } from "@/lib/giftCards";
+import {parseHouseholdCsv} from "@/lib/importCsv";
 
 type Kid = {
   key: string;
   include: boolean;
   fullName: string;
   age: string;
+  ageUnsure:boolean;
   gender: string;
   tops: string;
   bottoms: string;
@@ -107,6 +109,7 @@ function toKid(c: DraftFamily["children"][number], canvases: HTMLCanvasElement[]
     include: true,
     fullName: c.fullName,
     age: c.age == null ? "" : String(c.age),
+    ageUnsure:!!c.ageUnsure,
     gender: c.gender || "",
     tops: c.tops,
     bottoms: c.bottoms,
@@ -116,17 +119,18 @@ function toKid(c: DraftFamily["children"][number], canvases: HTMLCanvasElement[]
     faves: c.faves,
     favColor: c.favColor,
     giftCards: c.giftCards ?? (c.giftStore ? [{ store: c.giftStore, amount: c.giftAmount || 25 }] : []),
-    notes: "",
+    notes: c.notes||"",
     photo,
   };
 }
 
-export default function ImportClient() {
+export default function ImportClient({demo=false}:{demo?:boolean}) {
   const [fams, setFams] = useState<Fam[]>([]);
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
   const [paste, setPaste] = useState("");
   const [drag, setDrag] = useState(false);
+  const [sample,setSample]=useState(false);
   const input = useRef<HTMLInputElement>(null);
 
   async function parse(label: string, canvases: HTMLCanvasElement[], text: string) {
@@ -134,14 +138,18 @@ export default function ImportClient() {
     const res = await fetch("/api/admin/parse", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pages, text }) });
     const j = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(j.error || "Couldn't read that file");
-    const found: DraftFamily[] = j.families || [];
+    if(j.demo)setSample(true);
+    addDrafts(label,j.families||[],canvases);
+  }
+
+  function addDrafts(label:string,found:DraftFamily[],canvases:HTMLCanvasElement[]) {
     if (!found.length) throw new Error(`No children found in ${label}. Check the file or paste the email text.`);
     setFams((prev) => [
       ...prev,
       ...found.map(
         (f): Fam => ({
           key: `f${++seq}`,
-          label,
+          label:f.source||label,
           parentName: f.parentName,
           phone: f.phone,
           email: f.email,
@@ -159,8 +167,11 @@ export default function ImportClient() {
     for (const file of Array.from(files)) {
       try {
         setBusy(`Reading ${file.name}…`);
-        const { canvases, text } = await renderFile(file);
-        await parse(file.name, canvases, text);
+        if(/\.csv$/i.test(file.name)||file.type==="text/csv") {
+          if(file.size>2_000_000)throw new Error("Split CSV files larger than 2 MB into smaller batches.");
+          addDrafts(file.name,parseHouseholdCsv(await file.text()),[]);
+        } else if(demo) {throw new Error("This preview does not read real emails or PDFs. Use Load fictional email example below, or a fictional CSV.");}
+        else { const { canvases, text } = await renderFile(file); await parse(file.name, canvases, text); }
       } catch (e) {
         setErr(`${file.name}: ${e instanceof Error ? e.message : "couldn't be read"}`);
       }
@@ -169,11 +180,11 @@ export default function ImportClient() {
   }
 
   async function handlePaste() {
-    if (!paste.trim()) return;
+    if (!demo&&!paste.trim()) return;
     setErr("");
     setBusy("Reading the pasted email…");
     try {
-      await parse("Pasted email", [], paste);
+      await parse(demo?"Fictional review example":"Pasted email", [], demo?"Fictional sample only":paste);
       setPaste("");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Couldn't read that");
@@ -203,6 +214,7 @@ export default function ImportClient() {
       const n = cleanListItems(k.wants).length + cleanListItems(k.needs).length;
       if (!k.fullName.trim()) return setFam(f.key, { state: "error", msg: "Every child needs a name." });
       if (n === 0) return setFam(f.key, { state: "error", msg: `${k.fullName} has no wants or needs yet.` });
+      if(k.giftCards.some(g=>g.store.trim()&&(!Number.isInteger(g.amount)||g.amount<5||g.amount>200))) return setFam(f.key,{state:"error",msg:`Confirm each gift card amount for ${k.fullName} ($5–$200) or remove that card.`});
     }
     setFam(f.key, { state: "saving", msg: "" });
     const res = await fetch("/api/admin/import", {
@@ -213,6 +225,7 @@ export default function ImportClient() {
         children: kids.map((k) => ({
           fullName: k.fullName,
           age: k.age === "" ? null : Number(k.age),
+          ageUnsure:k.ageUnsure,
           gender: k.gender || null,
           tops: k.tops,
           bottoms: k.bottoms,
@@ -241,26 +254,29 @@ export default function ImportClient() {
 
   return (
     <div>
+      {demo&&<div className="banner-warn">Fictional review only. Do not upload real family records. CSV reads the actual rows locally; email/PDF extraction is simulated. <button type="button" className="btn sm" onClick={handlePaste} disabled={!!busy}>Load fictional email example</button></div>}
       <div
         className={`dropzone${drag ? " drag" : ""}`}
         onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
         onDragLeave={() => setDrag(false)}
         onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
       >
-        <h3>Drop family emails here</h3>
-        <p className="muted" style={{ margin: "6px 0 14px" }}>PDF (a printed Gmail thread), screenshot, photo, or .txt / .eml. Several files at once is fine. Up to {MAX_PAGES} pages each.</p>
+        <h3>Drop family applications here</h3>
+        <p className="muted" style={{ margin: "6px 0 14px" }}>CSV, PDF, screenshot, photo, or .txt / .eml. CSV is read in your browser without AI and saved only after review. Up to {MAX_PAGES} pages per PDF.</p>
         <button className="btn gold" onClick={() => input.current?.click()} disabled={!!busy}>Choose files</button>
-        <input ref={input} type="file" multiple accept=".pdf,image/*,.txt,.eml,text/plain" hidden onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+        <input ref={input} type="file" multiple accept={demo?".csv,text/csv":".pdf,image/*,.txt,.eml,text/plain,.csv,text/csv"} hidden onChange={(e) => e.target.files && handleFiles(e.target.files)} />
+        <p style={{marginTop:10}}><a href="/household-import-template.csv" download>Download the full CSV template</a> · One row per child, same household ID for siblings. Separate wants, needs and interests with semicolons. Additional gift cards: Store | Amount; Store | Amount.</p>
       </div>
-      <details style={{ margin: "14px 0" }}>
+      {!demo&&<details style={{ margin: "14px 0" }}>
         <summary style={{ cursor: "pointer", fontWeight: 700 }}>Or paste the email text</summary>
         <div className="field" style={{ marginTop: 10 }}>
           <label htmlFor="paste" className="lbl">Email text</label>
           <textarea id="paste" value={paste} onChange={(e) => setPaste(e.target.value)} style={{ minHeight: 140 }} />
           <div><button className="btn sm" onClick={handlePaste} disabled={!!busy || !paste.trim()}>Read this email</button></div>
         </div>
-      </details>
+      </details>}
       {busy && <div className="ok" role="status">{busy}</div>}
+      {sample&&<div className="banner-warn">Review build: email or PDF reading returns a fixed fictional example, not the contents of your document. Use only fictional data in this preview. CSV reads the actual rows locally.</div>}
       {err && <div className="err" role="alert">{err}</div>}
 
       {fams.map((f) => (
@@ -295,7 +311,7 @@ export default function ImportClient() {
                 <label className="check"><input type="checkbox" checked={k.include} onChange={(e) => setKid(f.key, k.key, { include: e.target.checked })} /><span><b>Add {k.fullName || "this child"} to the tree</b></span></label>
                 <div className="three aligned-fields">
                   <div className="field"><label className="lbl">Full name (private)</label><input value={k.fullName} onChange={(e) => setKid(f.key, k.key, { fullName: e.target.value })} /></div>
-                  <div className="field"><label className="lbl">Age</label><input type="number" min={0} max={21} value={k.age} onChange={(e) => setKid(f.key, k.key, { age: e.target.value })} /></div>
+                  <div className="field"><label className="lbl">Age <span style={{marginLeft:8}}><input type="checkbox" checked={k.ageUnsure} onChange={e=>setKid(f.key,k.key,{ageUnsure:e.target.checked})}/> Unclear</span></label><input type="number" min={0} max={120} value={k.age} onChange={(e) => setKid(f.key, k.key, { age: e.target.value })} /></div>
                   <div className="field"><label className="lbl">Gender</label><select value={k.gender} onChange={(e) => setKid(f.key, k.key, { gender: e.target.value })}><option value="">Not stated</option><option>Girl</option><option>Boy</option><option>Other</option></select></div>
                 </div>
                 <div className="three aligned-fields">

@@ -3,7 +3,7 @@ import InteractiveTree from "@/components/InteractiveTree";
 import Link from "next/link";
 import { allChildren } from "@/lib/data";
 import { publicTree } from "@/lib/child";
-import { DRIVE, daysUntil } from "@/lib/drive";
+import { DRIVE, daysUntil, giftDropOff } from "@/lib/drive";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Paradigm & Oh MyMy’s Gift & Glam — 10th Annual Holiday Giving Celebration" };
@@ -22,8 +22,8 @@ export default async function Home() {
   const dl = daysUntil(DRIVE.returnBy);
 
   const hero = (
-    <div className="hero">
-      <div>
+    <div className="hero campaign-hero">
+      <div className="campaign-left">
         <p style={{ color: "var(--gold)", fontWeight: 700, fontSize: "1.1rem", marginBottom: 10 }}>Paradigm &amp; Oh MyMy’s Gift &amp; Glam<br />10th Annual Holiday Giving Celebration</p>
         <h1>
           {DRIVE.tagline.replace("this Christmas", "")}
@@ -32,9 +32,9 @@ export default async function Home() {
         <p className="lead">
           Pick an angel, shop their wish list, and bring the gifts back unwrapped. Each ornament shows a unique angel code. Names and private details stay with the organizers.
         </p>
-        <Link href="/donate" className="btn gold" style={{ marginTop: 18 }}>♥ Donate to Gift &amp; Glam</Link>
-      </div>
-      <div className="tag">
+        <Link href="/donate" className="btn gold campaign-donate" style={{ marginTop: 18 }}>♥ Donate for Gift Cards</Link>
+        <p style={{marginTop:8,color:"#d3eadf",fontSize:".86rem"}}>Additional angel gifts, party expenses and volunteering are also welcome.</p>
+        <div className="tag campaign-progress">
         <div className="ribbon" />
         <div>
           <span className="bignum">{left}</span> <span className="muted">of {total} angels still need a sponsor</span>
@@ -48,14 +48,15 @@ export default async function Home() {
           <li><div><b>Return gifts unwrapped</b><span>By {DRIVE.returnByLabel}{dl >= 0 ? ` (${dl} day${dl === 1 ? "" : "s"} left)` : " (deadline passed)"}.</span></div></li>
           <li><div><b>Gift drive giveaway</b><span>{DRIVE.giveawayLabel}.</span></div></li>
         </ol>
+        </div>
       </div>
+      <div className="campaign-tree">{failed&&<div className="err">The tree can&apos;t load right now. Please try again shortly.</div>}<InteractiveTree kids={kids} dropOff={giftDropOff()}/></div>
     </div>
   );
 
   return (
     <SiteShell hero={hero}>
-      {failed && <div className="err" style={{ marginTop: 16 }}>The tree can&apos;t load right now. Please try again in a moment.</div>}
-      <InteractiveTree kids={kids} />
+      <p className="campaign-thanks">Thank you for helping make Christmas brighter for a child!</p>
     </SiteShell>
   );
 }

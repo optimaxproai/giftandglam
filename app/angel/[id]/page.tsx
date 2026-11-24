@@ -5,7 +5,7 @@ import { Ornament } from "@/components/Ornament";
 import ClaimForm from "@/components/ClaimForm";
 import { allChildren } from "@/lib/data";
 import { toPublic, pad } from "@/lib/child";
-import { DRIVE } from "@/lib/drive";
+import { DRIVE, giftDropOff } from "@/lib/drive";
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +73,7 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
               <div className="ribbon" />
               <h3 style={{ marginBottom: 6 }}>Adopt {c.firstName}</h3>
               <p className="muted" style={{ marginBottom: 14, fontSize: ".88rem" }}>Return the gifts unwrapped by {DRIVE.returnByLabel}. The giveaway is {DRIVE.giveawayLabel}.</p>
-              <ClaimForm childId={c.id} name={c.firstName} gifts={c.gifts} />
+              <ClaimForm childId={c.id} name={c.firstName} gifts={c.gifts} child={c} dropOff={giftDropOff()} />
             </>
           ) : (
             <>
