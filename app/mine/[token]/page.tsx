@@ -30,7 +30,7 @@ export default async function Mine({ params }: { params: { token: string } }) {
           <p className="muted">Hello {sponsor.name.split(" ")[0]}. Return gifts unwrapped by <b>{DRIVE.returnByLabel}</b>{dl >= 0 ? ` (${dl} days left)` : ""}.</p>
         </div>
         <form action={`/mine/${params.token}/resume`} method="post">
-          <button type="submit" className="btn ghost sm">Browse the tree</button>
+          <button type="submit" className="btn ghost sm">Adopt Another Angel</button>
         </form>
       </div>
       {mine.length > 0 && (
@@ -56,10 +56,10 @@ export default async function Mine({ params }: { params: { token: string } }) {
                 </div>
                 <SponsorChecklist token={params.token} items={gifts.filter(g=>g.child_id===c.id&&g.active)} editable={row.status==="claimed"||row.status==="purchased"} code={c.code} instructions={sponsorInstructions(c)}/>
                 <p className="muted">Sizes: Shirt {c.tops||"?"} · Pants {c.bottoms||"?"} · Shoes {c.shoes||"?"}</p>
-                {c.siblings.length > 0 && (
-                  <p className="muted" style={{ fontSize: ".84rem", textAlign: "center" }}>
-                    Siblings on the tree: {c.siblings.map((s) => <Link key={s.id} href={`/angel/${s.id}`}>{s.firstName}</Link>).reduce<React.ReactNode[]>((a, x, i) => (i ? [...a, ", ", x] : [x]), [])}
-                  </p>
+                {c.siblings.some(s=>s.available) && (
+                  <div className="muted" style={{ fontSize: ".84rem", textAlign: "center" }}>
+                    Available siblings: {c.siblings.filter(s=>s.available).map(s=><form key={s.id} action={`/mine/${params.token}/resume`} method="post" style={{display:"inline-block",margin:4}}><input type="hidden" name="angel" value={s.firstName}/><button className="btn ghost sm">{s.firstName}</button></form>)}
+                  </div>
                 )}
                 <div className="no-print"><MineActions token={params.token} childId={c.id} status={row.status} /></div>
               </div>

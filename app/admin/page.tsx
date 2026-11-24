@@ -5,6 +5,8 @@ import { getCampaign } from "@/lib/campaign";
 import { DRIVE, daysUntil } from "@/lib/drive";
 import { STATUS_LABEL, STATUS_ORDER } from "@/lib/types";
 import { giftCounts } from "@/lib/giftItems";
+import CampaignImpact from "@/components/CampaignImpact";
+import {campaignImpact} from "@/lib/campaignImpact";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +77,7 @@ export default async function AdminHome() {
           <div className="acts" style={{ marginTop: 14 }}><Link className="btn sm ghost" href="/admin/print">Print labels</Link></div>
         </div>
       </div>
+      <CampaignImpact totals={campaignImpact(rows,items,offers)}/>
     </SiteShell>
   );
 }

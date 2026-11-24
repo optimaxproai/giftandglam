@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/Festive";
 import { Ornament } from "@/components/Ornament";
 import ClaimForm from "@/components/ClaimForm";
-import { allChildren } from "@/lib/data";
-import { toPublic, pad } from "@/lib/child";
-import { DRIVE, giftDropOff } from "@/lib/drive";
+import { allChildren, sponsorByToken } from "@/lib/data";
+import { toPublic, onTree } from "@/lib/child";
+import { DRIVE } from "@/lib/drive";
+import { sponsorSession } from "@/lib/sponsor-session";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +21,10 @@ function List({ title, items }: { title: string; items: string[] }) {
 
 export default async function AngelPage({ params }: { params: { id: string } }) {
   const all = await allChildren();
-  const row = all.find((c) => c.id === params.id && c.approved);
+  const row = all.find((c) => c.id === params.id && onTree(c));
   if (!row) notFound();
   const c = toPublic(row, all);
+  const token=sponsorSession(); const hasSponsorSession=token ? !!(await sponsorByToken(token)) : false;
 
   return (
     <SiteShell>
@@ -73,7 +75,7 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
               <div className="ribbon" />
               <h3 style={{ marginBottom: 6 }}>Adopt {c.firstName}</h3>
               <p className="muted" style={{ marginBottom: 14, fontSize: ".88rem" }}>Return the gifts unwrapped by {DRIVE.returnByLabel}. The giveaway is {DRIVE.giveawayLabel}.</p>
-              <ClaimForm childId={c.id} name={c.firstName} gifts={c.gifts} child={c} dropOff={giftDropOff()} />
+              <ClaimForm child={c} hasSponsorSession={hasSponsorSession} />
             </>
           ) : (
             <>

@@ -1,92 +1,46 @@
 "use client";
-
-import {useRouter} from "next/navigation";
-import { useMemo, useRef, useState } from "react";
-import type { PublicChild } from "@/lib/types";
-import { layoutAngelTree, treeColor, treeMatches, type TreeFilters } from "@/lib/treeLayout";
+import Link from "next/link";
+import {useMemo,useRef,useState,useEffect} from "react";
+import type {PublicChild} from "@/lib/types";
+import {layoutAngelTree,treeColor,treeMatches,type TreeFilters} from "@/lib/treeLayout";
+import type {CampaignImpact} from "@/lib/campaignImpact";
+import {DRIVE} from "@/lib/drive";
 import styles from "./InteractiveTree.module.css";
 import Celebration from "./Celebration";
 import ClaimForm from "./ClaimForm";
 
-const fullTree: TreeFilters = { query: "", age: "", gender: "", availableOnly: false };
-
-function GiftList({ title, items }: { title: string; items: string[] }) {
-  return <div><h4 className={styles.listTitle}>{title}</h4>{items.length ? <ul className="list">{items.map((item, i) => <li key={i}>{item}</li>)}</ul> : <p className="muted">Not listed</p>}</div>;
-}
-
-function TreeDetail({ child, hidden,dropOff,onClaim }: { child: PublicChild | undefined; hidden: boolean;dropOff:string;onClaim:()=>void }) {
+const fullTree:TreeFilters={query:"",age:"",gender:"",availableOnly:false};
+function GiftList({title,items}:{title:string;items:string[]}){return <div className={styles.giftList}><h4 className={styles.listTitle}>{title}</h4>{items.length?<ul className="list">{items.map((item,i)=><li key={i}>{item}</li>)}</ul>:<p className="muted">Not listed</p>}</div>}
+function TreeDetail({child,hidden,hasSponsorSession,onBrowse}:{child:PublicChild|undefined;hidden:boolean;hasSponsorSession:boolean;onBrowse:()=>void}){
   const [adopting,setAdopting]=useState(false);
-  if (!child) return <><h3>Find your angel</h3><p className="muted">Select any ornament to see the angel’s age, sizes, wants, needs and interests. Then choose to sponsor them.</p></>;
-  const gifts = (child as PublicChild & { gifts?: { store: string; amount: number }[] }).gifts ?? (child.gift ? [child.gift] : []);
-  return <>
-    <div className={styles.detailHead}>
-      <div className={`${styles.detailBall} ${styles[treeColor(child, true)]}`} aria-hidden="true">★</div>
-      <div><h3>{child.code}</h3><p className="muted">{[child.age === null ? "Age not stated" : `${child.age} years old`, child.gender || "Gender not stated"].join(" · ")}</p><span className={`pill ${child.available ? "available" : "claimed"}`}>{child.available ? "Available" : "Sponsored"}</span></div>
-    </div>
-    {hidden && <p className="muted">This angel is outside your current filters. Select Show full tree to see their ornament again.</p>}
-    <div className="facts">
-      {[["Shirt", child.tops], ["Pants", child.bottoms], ["Shoes", child.shoes], ["Favorite color", child.favColor]].filter(([, size]) => !!size).map(([label, size]) => <div className="fact" key={label}><small>{label}</small>{size}</div>)}
-    </div>
-    <GiftList title="Wants" items={child.wants} />
-    <GiftList title="Needs" items={child.needs} />
-    <GiftList title="Interests" items={child.faves} />
-    {gifts.length > 0 && <GiftList title="Optional gift cards" items={gifts.map((g) => `$${g.amount} ${g.store}`)} />}
-    {child.siblings.length > 0 && <p className="muted">{child.siblings.length} sibling{child.siblings.length === 1 ? " is" : "s are"} also on the tree. See the full angel page for details.</p>}
-    {adopting?<div className={styles.claimSection}><ClaimForm childId={child.id} name={child.code} gifts={child.gifts} child={child} dropOff={dropOff} onClaim={onClaim}/></div>:child.available?<button type="button" className="btn" onClick={()=>setAdopting(true)}>Adopt {child.code}</button>:<p className="ok">This angel has a sponsor. Thank you for helping make Christmas bright!</p>}
-  </>;
+  if(!child)return <><h3>Selected Angel Details</h3><p className="muted">Choose an ornament to see their wishes, needs and clothing sizes.</p></>;
+  return <><div className={styles.detailHead}><div className={`${styles.detailBall} ${styles[treeColor(child,true)]}`} aria-hidden="true">★</div><div><h2>Angel {child.code}</h2><p className="muted">{[child.age===null?"Age not stated":`${child.age} years old`,child.gender||"Gender not stated"].join(" · ")}</p><span className={`pill ${child.available?"available":"claimed"}`}>{child.available?"Available":"Sponsored"}</span></div></div>
+  {hidden&&<p className="muted">This angel is outside your current filters. Select Show full tree to see their ornament again.</p>}
+  <div className="facts">{[["Shirt",child.tops],["Pants",child.bottoms],["Shoes",child.shoes],["Favorite color",child.favColor]].filter(([,size])=>!!size).map(([label,size])=><div className="fact" key={label}><small>{label}</small>{size}</div>)}</div>
+  <GiftList title="Wants" items={child.wants}/><GiftList title="Needs" items={child.needs}/><GiftList title="Interests" items={child.faves}/>{child.gifts.length>0&&<GiftList title="Optional gift cards" items={child.gifts.map(g=>`$${g.amount} ${g.store}`)}/>}
+  <p className="muted">{DRIVE.giftSuggestion}</p>
+  {adopting?<div className={styles.claimSection}><ClaimForm child={child} hasSponsorSession={hasSponsorSession}/></div>:child.available?<button type="button" className="btn" onClick={()=>setAdopting(true)}>Adopt {child.code}</button>:<p className="ok">This angel has a sponsor. Thank you for helping make Christmas bright!</p>}
+  <div className={styles.browse}><p className="muted">Want to keep looking? Your filters will stay as they are.</p><button type="button" className="btn ghost sm" onClick={onBrowse}>Find another angel</button></div></>;
 }
+function scrollTo(el:HTMLElement|null){if(!el)return;el.scrollIntoView({block:"start",behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});el.focus({preventScroll:true})}
 
-export default function InteractiveTree({ kids,dropOff }: { kids: PublicChild[];dropOff:string }) {
-  const router=useRouter();
-  const [filters, setFilters] = useState<TreeFilters>(fullTree);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [burst,setBurst]=useState(0);
-  const [claimed,setClaimed]=useState<string[]>([]);
-  const detail = useRef<HTMLElement>(null);
-  const ordered = useMemo(() => kids.map(c=>claimed.includes(c.id)?{...c,available:false,status:"claimed" as const}:c).sort((a, b) => a.no - b.no || a.id.localeCompare(b.id)), [kids,claimed]);
-  const layout = useMemo(() => layoutAngelTree(ordered.length), [ordered.length]);
-  const shown = useMemo(() => new Set(ordered.filter((child) => treeMatches(child, filters)).map((child) => child.id)), [ordered, filters]);
-  const child = ordered.find((c) => c.id === selected);
-  const available = ordered.filter((c) => c.available).length;
-
-  function select(id: string) {
-    setSelected(id);
-    setBurst(n=>n+1);
-    if (window.matchMedia("(max-width: 760px)").matches) detail.current?.scrollIntoView({ block: "start", behavior: "auto" });
-  }
-
-  return <section className={styles.section} aria-label="Virtual Angel Tree">
-    <div className={`toolbar ${styles.filters}`}>
-      <input type="search" value={filters.query} onChange={(e) => setFilters({ ...filters, query: e.target.value })} placeholder="Search angel codes, wishes, needs or interests" aria-label="Search angels" />
-      <select value={filters.age} onChange={(e) => setFilters({ ...filters, age: e.target.value })} aria-label="Age range"><option value="">All ages</option><option value="0-8">Up to 8</option><option value="9-12">9 to 12</option><option value="13-">13 and up</option></select>
-      <select value={filters.gender} onChange={(e) => setFilters({ ...filters, gender: e.target.value })} aria-label="Gender"><option value="">All genders</option><option value="girl">Girls</option><option value="boy">Boys</option><option value="other">Other / not stated</option></select>
-      <label><input type="checkbox" checked={filters.availableOnly} onChange={(e) => setFilters({ ...filters, availableOnly: e.target.checked })} /> Available only</label>
-      <button type="button" className="btn ghost sm" onClick={() => setFilters(fullTree)}>Show full tree</button>
-    </div>
-    <div className={styles.counts} role="status"><b>{shown.size} of {kids.length} angels shown</b><span className="muted">{available} available · {kids.length - available} sponsored</span></div>
-    <div className={styles.legend} aria-label="Ornament color legend">
-      <span><i className={styles.boy} /> Boys</span><span><i className={styles.girl} /> Girls</span><span><i className={styles.other} /> Other / not stated</span><span><i className={styles.gold} /> Selected or sponsored</span>
-    </div>
-    <div className={styles.split}>
-      <div className={styles.scene}>
-        <h3>Our Angel Tree</h3><p className={styles.subtitle}>{kids.length ? "Choose an ornament to make Christmas bright." : "The tree is being decorated"}</p>
-        <div className={styles.viewport} role="region" aria-label="Tree ornaments (scroll to see all if needed)" tabIndex={0}>
-          <div className={`${styles.tree} ${styles.cinematic}`} style={{ minWidth: layout.minWidth, minHeight: Math.max(540,layout.minHeight) }}>
-            {Array.from({length:20},(_,i)=><i className={styles.flake} key={i} aria-hidden="true" style={{left:`${i*47%100}%`,animationDuration:`${10+i%6}s`,animationDelay:`-${i*2%15}s`,width:2+i%4,height:2+i%4}}/>)}
-            {ordered.map((c, i) => {
-              if (!shown.has(c.id)) return null;
-              const point = layout.points[i];
-              const active = c.id === selected;
-              const label = `${c.code}, ${c.age === null ? "age not stated" : `${c.age} years old`}, ${c.gender || "gender not stated"}, ${c.available ? "available" : "sponsored"}`;
-              const [prefix, ...rest] = c.code.split("-");
-              return <button key={c.id} type="button" className={`${styles.ornament} ${styles[treeColor(c, active)]} ${active ? styles.active : ""}`} style={{ left: `${point.x}%`, top: `${point.y}%` }} aria-pressed={active} aria-label={label} title={label} aria-controls="selected-angel" onClick={() => select(c.id)}><span>{rest.length ? <>{prefix}<br />{rest.join("-")}</> : c.code}</span>{active&&burst>0&&c.available&&<Celebration key={burst} mode="sparkles"/>}</button>;
-            })}
-            {kids.length > 0 && shown.size === 0 && <div className={styles.emptyOverlay}>No angels match your filters. <button type="button" onClick={() => setFilters(fullTree)}>Show full tree</button></div>}
-          </div>
-        </div>
-        <p className={styles.treeNote} aria-live="polite">{child?`✦ ${child.code} ${child.available?"selected! See their wish list below.":"has a sponsor. Thank you!"}`:kids.length ? `${shown.size} ornament${shown.size === 1 ? "" : "s"} shown · ${kids.length} angels in the full tree` : "Angels will appear here soon. Check back shortly."}</p>
-      </div>
-      <aside id="selected-angel" ref={detail} aria-label="Selected angel details" className={`panel ${styles.detail}`}><TreeDetail key={child?.id||"none"} child={child} hidden={!!child && !shown.has(child.id)} dropOff={dropOff} onClaim={()=>{if(child){setClaimed(prev=>prev.includes(child.id)?prev:[...prev,child.id]);setFilters(fullTree);router.refresh();}}}/></aside>
-    </div>
-  </section>;
+export default function InteractiveTree({kids,failed,totals,initialCode,hasSponsorSession}:{kids:PublicChild[];failed:boolean;totals:CampaignImpact|null;initialCode?:string;hasSponsorSession:boolean}){
+  const [filters,setFilters]=useState<TreeFilters>(fullTree);const [selected,setSelected]=useState<string|null>(()=>kids.find(c=>c.code===initialCode)?.id??null);const [burst,setBurst]=useState(0);
+  const detail=useRef<HTMLElement>(null),finder=useRef<HTMLElement>(null),timer=useRef<ReturnType<typeof setTimeout>|null>(null);
+  useEffect(()=>()=>{if(timer.current)clearTimeout(timer.current)},[]);
+  const ordered=useMemo(()=>[...kids].sort((a,b)=>a.no-b.no||a.id.localeCompare(b.id)),[kids]);const layout=useMemo(()=>layoutAngelTree(ordered.length),[ordered.length]);const shown=useMemo(()=>new Set(ordered.filter(child=>treeMatches(child,filters)).map(child=>child.id)),[ordered,filters]);
+  const child=ordered.find(c=>c.id===selected);const available=ordered.filter(c=>c.available).length;const sponsored=totals?.sponsored??kids.length-available;const pct=kids.length?Math.round(sponsored/kids.length*100):0;
+  function select(id:string){setSelected(id);setBurst(n=>n+1);if(timer.current)clearTimeout(timer.current);timer.current=setTimeout(()=>scrollTo(detail.current),window.matchMedia("(prefers-reduced-motion: reduce)").matches?0:450)}
+  return <section className={styles.section} aria-label="Virtual Angel Tree"><div className="hero campaign-hero"><div className="campaign-left">
+  <p className="campaign-event">Paradigm &amp; Oh MyMy’s Gift &amp; Glam<br/>10th Annual Holiday Giving Celebration</p><h1>Help us bless a child <em>this Christmas.</em></h1><p className="lead">Pick an angel, shop their wish list, and bring the gifts back unwrapped. Names and private details stay with the organizers.</p><Link href="/donate" className="btn gold campaign-donate" style={{marginTop:18}}>♥ Ways to Donate</Link><p className="campaign-note">Gift cards, additional angel gifts, party expenses and volunteering are welcome.</p>
+  <section id="find-your-angel" ref={finder} tabIndex={-1} className={styles.finder} aria-labelledby="finder-title"><h2 id="finder-title">Find Your Angel</h2><p className="muted">Use the filters or choose an ornament.</p><div className={styles.finderFields}>
+  <label className={styles.searchField}><span>Search</span><input type="search" value={filters.query} onChange={e=>setFilters({...filters,query:e.target.value})} placeholder="Search angel codes, wishes or interests"/></label><label><span>Age</span><select value={filters.age} onChange={e=>setFilters({...filters,age:e.target.value})}><option value="">All ages</option><option value="0-8">Up to 8</option><option value="9-12">9 to 12</option><option value="13-">13 and up</option></select></label><label><span>Gender</span><select value={filters.gender} onChange={e=>setFilters({...filters,gender:e.target.value})}><option value="">All genders</option><option value="girl">Girls</option><option value="boy">Boys</option><option value="other">Other / not stated</option></select></label></div>
+  <div className={styles.finderActions}><label><input type="checkbox" checked={filters.availableOnly} onChange={e=>setFilters({...filters,availableOnly:e.target.checked})}/> Available only</label><button type="button" className="btn ghost sm" onClick={()=>setFilters(fullTree)}>Show full tree</button></div><p className={styles.finderCount} role="status">{shown.size} of {kids.length} angels shown</p></section>
+  {!failed&&<section className={styles.scoreboard} aria-label="Campaign scoreboard"><p><strong>{available}</strong> of {kids.length} angels still need a sponsor</p><div className="bar" role="progressbar" aria-label="Angels sponsored" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}><i style={{width:`${pct}%`}}/></div><div className={styles.scoreRow}><span><b>{sponsored}</b> sponsored</span>{totals&&<span><b>{totals.purchased}/{totals.requested}</b> gifts purchased</span>}</div></section>}</div>
+  <div className="campaign-tree">{failed&&<p className="err">The tree can’t load right now. Please try again shortly.</p>}<div className={styles.scene}><div className={styles.sceneHead}><h3>Our Angel Tree</h3><div className={styles.legend} aria-label="Ornament color legend"><span><i className={styles.boy}/> Boys</span><span><i className={styles.girl}/> Girls</span><span><i className={styles.other}/> Other / not stated</span><span><i className={styles.gold}/> Selected or sponsored</span></div></div><p className={styles.subtitle}>{kids.length?"Choose an ornament to make Christmas bright.":"The tree is being decorated"}</p><div className={styles.viewport} role="region" aria-label="Tree ornaments (scroll to see all if needed)" tabIndex={0}><div className={`${styles.tree} ${styles.cinematic}`} style={{minWidth:layout.minWidth,minHeight:Math.max(540,layout.minHeight)}}>
+  {Array.from({length:20},(_,i)=><i className={styles.flake} key={i} aria-hidden="true" style={{left:`${i*47%100}%`,animationDuration:`${10+i%6}s`,animationDelay:`-${i*2%15}s`,width:2+i%4,height:2+i%4}}/>)}
+  {ordered.map((c,i)=>{if(!shown.has(c.id))return null;const point=layout.points[i],active=c.id===selected;const label=`${c.code}, ${c.age===null?"age not stated":`${c.age} years old`}, ${c.gender||"gender not stated"}, ${c.available?"available":"sponsored"}`;const [prefix,...rest]=c.code.split("-");return <button key={c.id} type="button" className={`${styles.ornament} ${styles[treeColor(c,active)]} ${active?styles.active:""}`} style={{left:`${point.x}%`,top:`${point.y}%`}} aria-pressed={active} aria-label={label} title={label} aria-controls="selected-angel" onClick={()=>select(c.id)}><span>{rest.length?<>{prefix}<br/>{rest.join("-")}</>:c.code}</span>{active&&burst>0&&c.available&&<Celebration key={burst} mode="sparkles"/>}</button>})}
+  {kids.length>0&&shown.size===0&&<div className={styles.emptyOverlay}>No angels match your filters. <button type="button" onClick={()=>setFilters(fullTree)}>Show full tree</button></div>}</div></div><p className={styles.treeNote} aria-live="polite">{child?`✦ ${child.code} ${child.available?"selected! See their wish list below.":"has a sponsor. Thank you!"}`:kids.length?`${shown.size} ornament${shown.size===1?"":"s"} shown · ${kids.length} angels in the full tree`:"Angels will appear here soon. Check back shortly."}</p></div>
+  <aside id="selected-angel" ref={detail} tabIndex={-1} aria-label="Selected angel details" className={`panel ${styles.detail}`}><TreeDetail key={child?.id||"none"} child={child} hidden={!!child&&!shown.has(child.id)} hasSponsorSession={hasSponsorSession} onBrowse={()=>scrollTo(finder.current)}/></aside></div></div>
+  <section className="campaign-steps" aria-label="How to participate"><h3>How to participate</h3><ol><li><b>Choose an angel</b></li><li><b>Shop their wish list</b></li><li><b>Return unwrapped gifts</b><span> · {DRIVE.returnByLabel}</span></li><li><b>Giveaway</b><span> · {DRIVE.giveawayLabel}</span></li></ol></section></section>;
 }
