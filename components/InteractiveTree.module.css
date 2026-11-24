@@ -1,0 +1,39 @@
+.section { padding-bottom: 8px; }
+.filters { margin-bottom: 10px; }
+.counts { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: .88rem; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; background: #fff; border: 1px solid var(--line); padding: 10px 13px; border-radius: 12px; margin-bottom: 12px; font-size: .82rem; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border-radius: 50%; background: var(--ball); box-shadow: inset 0 0 2px #ffffff8a, 0 0 0 1px #00000025; }
+.split { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; gap: 16px; }
+.scene { background: radial-gradient(ellipse at center, #265f45 0%, #153d30 58%, #0b261f 100%); color: #fff; padding: 18px 12px 14px; border-radius: 20px; box-shadow: 0 9px 30px #0c2a201c; text-align: center; min-width: 0; }
+.scene h3 { color: #fff; font-size: 1.35rem; }
+.subtitle, .treeNote { color: #d1eadb; font-size: .83rem; }
+.subtitle { margin-top: 4px; }
+.treeNote { margin-top: 5px; }
+.viewport { overflow-x: auto; padding: 6px 0; border-radius: 10px; }
+.tree { position: relative; width: 100%; isolation: isolate; }
+.branch { position: absolute; left: 50%; transform: translateX(-50%); height: 27%; clip-path: polygon(50% 0, 100% 92%, 72% 87%, 83% 100%, 50% 94%, 17% 100%, 28% 87%, 0 92%); background: linear-gradient(123deg, #337854, #145236 63%, #092c22); z-index: 1; }
+.floor { position: absolute; width: 79%; height: 7%; left: 10.5%; bottom: 3%; background: #051c1590; border-radius: 50%; filter: blur(1px); }
+.trunk { position: absolute; left: 46%; width: 8%; height: 16%; bottom: 7%; background: linear-gradient(90deg, #513221, #aa7041 55%, #5a3728); border-radius: 4px; }
+.star { position: absolute; top: 0; left: 50%; transform: translateX(-50%); color: #f8c74d; font-size: 3rem; line-height: 1; text-shadow: 0 0 18px #f9d66b95; z-index: 2; }
+.light { position: absolute; z-index: 2; width: 3px; height: 3px; border-radius: 50%; background: #f7cd72; box-shadow: 0 0 6px 2px #f7cd7270; }
+.boy { --shine: #a6dbff; --ball: #327fdb; --shadow: #17458e; --letter: #fff; }
+.girl { --shine: #e3bdff; --ball: #9b5ed4; --shadow: #6336a3; --letter: #fff; }
+.other { --shine: #f9fcff; --ball: #b5c6d3; --shadow: #647a91; --letter: #142635; }
+.gold { --shine: #fff1a0; --ball: #e7b840; --shadow: #a36d09; --letter: #342407; }
+.ornament, .detailBall { border-radius: 50%; background: radial-gradient(circle at 28% 23%, var(--shine), var(--ball) 42%, var(--shadow) 96%); border: 1px solid #ffffffbf; box-shadow: 1px 4px 7px #001b15a0, inset 0 0 4px #ffffff70; color: var(--letter); display: grid; place-items: center; }
+.ornament { position: absolute; width: 44px; height: 44px; transform: translate(-50%, -50%); z-index: 4; font-size: .65rem; font-weight: 800; line-height: 1.05; padding: 3px; cursor: pointer; transition: transform .15s; }
+.ornament::before, .detailBall::before { content: ""; position: absolute; top: -6px; left: calc(50% - 5px); width: 10px; height: 8px; border-radius: 2px 2px 0 0; background: linear-gradient(90deg, #af741c, #f2ce6e, #b68427); }
+.ornament:hover, .ornament:focus-visible { transform: translate(-50%, -50%) scale(1.1); z-index: 5; }
+.ornament.active { outline: 2px solid #fff; outline-offset: 3px; z-index: 5; }
+.emptyOverlay { position: absolute; z-index: 6; top: 42%; left: 8%; right: 8%; padding: 16px; border-radius: 12px; color: #fff; background: #0b261fe8; }
+.emptyOverlay button { background: none; color: #ffdd79; text-decoration: underline; border: 0; font-weight: 700; cursor: pointer; }
+.detail { display: grid; gap: 14px; position: sticky; top: 16px; scroll-margin: 16px; }
+.detail h3, .listTitle { color: var(--pine); }
+.detailHead { display: flex; gap: 14px; align-items: center; }
+.detailHead h3 { font-size: 1.6rem; }
+.detailBall { position: relative; flex: none; width: 56px; height: 56px; font-size: 1.55rem; }
+.listTitle { margin: 0 0 4px; font-size: .94rem; }
+@media (min-width: 1200px) { .ornament { width: 46px; height: 46px; } }
+@media (max-width: 760px) { .split { grid-template-columns: 1fr; } .detail { position: static; } .scene { padding-inline: 8px; } .legend { font-size: .77rem; } }
+@media (prefers-reduced-motion: reduce) { .ornament { transition: none; } }
