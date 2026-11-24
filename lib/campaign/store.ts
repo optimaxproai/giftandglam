@@ -1,10 +1,11 @@
 import { randomBytes, randomUUID } from "crypto";
 import { db } from "../supabase/admin";
 import { normEmail, normPhone } from "../families";
+import type { LabelStockSetting } from "../print";
 import { DEFAULT_MAX_AGE } from "./rules";
 import type { ChildRow, FamilyRow, SponsorRow } from "../types";
 
-export type Settings = { maxAge: number; maxAgeConfirmed: boolean; labelStock: string | null };
+export type Settings = { maxAge: number; maxAgeConfirmed: boolean; labelStock: LabelStockSetting };
 
 export type NewFamily = { parent_name: string; phone: string | null; email: string | null; story: string | null; source_label: string | null };
 export type NewKid = Pick<
@@ -185,7 +186,7 @@ export function createSupabaseStore(): CampaignStore {
       const rows = ok(await db().from("drive_settings").select("key,value")) as { key: string; value: Record<string, unknown> }[];
       const get = (k: string) => rows.find((r) => r.key === k)?.value;
       const ma = get(SETTINGS_KEYS.maxAge) as { value?: number; confirmed?: boolean } | undefined;
-      const ls = get(SETTINGS_KEYS.labelStock) as { value?: string } | undefined;
+      const ls = get(SETTINGS_KEYS.labelStock) as { value?: LabelStockSetting } | undefined;
       return { maxAge: ma?.value ?? DEFAULT_MAX_AGE, maxAgeConfirmed: !!ma?.confirmed, labelStock: ls?.value ?? null };
     },
     async saveSettings(p) {
