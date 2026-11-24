@@ -2,7 +2,8 @@ import Link from "next/link";
 import { SiteShell } from "@/components/Festive";
 import { requireAdmin } from "@/lib/auth";
 import { getCampaign } from "@/lib/campaign";
-import { DRIVE, daysUntil } from "@/lib/drive";
+import { DRIVE, INTAKE_SEASON, daysUntil } from "@/lib/drive";
+import { getIntake } from "@/lib/intake";
 import { STATUS_LABEL, STATUS_ORDER } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,13 @@ export default async function AdminHome() {
   const gcPending = tree.filter((x) => x.gift_card_status === "pledged").length;
   const approvedNotPublished = s.approved - s.published;
   const dl = daysUntil(DRIVE.returnBy);
+  let waiting = 0;
+  try {
+    const c = await (await getIntake()).counts(INTAKE_SEASON);
+    waiting = c.submitted;
+  } catch {
+    /* intake tables not migrated yet */
+  }
 
   return (
     <SiteShell admin>
@@ -57,13 +65,14 @@ export default async function AdminHome() {
         <div className="panel">
           <h3>Needs you</h3>
           <ul className="list" style={{ marginTop: 12, paddingLeft: 18 }}>
+            {waiting > 0 && <li><b>{waiting} {INTAKE_SEASON} application{waiting === 1 ? "" : "s"}</b> waiting for review. <Link href="/admin/applications?status=submitted">Review</Link></li>}
             {s.households.review > 0 && <li><b>{s.households.review} household{s.households.review === 1 ? "" : "s"}</b> need a decision. <Link href="/admin/households?state=review">Review</Link></li>}
             {s.ageFlags > 0 && <li><b>{s.ageFlags} child{s.ageFlags === 1 ? "" : "ren"}</b> with a missing or unclear age. <Link href="/admin/households?state=review">Fix</Link></li>}
             {approvedNotPublished > 0 && <li><b>{approvedNotPublished} approved</b> but not on the tree. <Link href="/admin/households?state=decided">Publish</Link></li>}
             {count.available > 0 && <li><b>{count.available} angels</b> still need a sponsor.</li>}
             {out > 0 && <li><b>{out} sponsors</b> have not returned gifts. <Link href="/admin/sponsors">Send reminders</Link></li>}
             {gcPending > 0 && <li><b>{gcPending} gift cards</b> pledged but not received. <Link href="/admin/children?filter=giftcard">Check in</Link></li>}
-            {!s.households.review && !approvedNotPublished && !count.available && !out && !gcPending && <li className="muted">Nothing is waiting on you.</li>}
+            {!waiting && !s.households.review && !approvedNotPublished && !count.available && !out && !gcPending && <li className="muted">Nothing is waiting on you.</li>}
           </ul>
           <div className="acts" style={{ marginTop: 14 }}><Link className="btn sm ghost" href="/admin/print">Print labels</Link></div>
         </div>

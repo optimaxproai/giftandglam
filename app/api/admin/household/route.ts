@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { adminUser } from "@/lib/auth";
 import { getCampaign, resetCampaignReview } from "@/lib/campaign";
+import { resetReview } from "@/lib/intake";
 import { CampaignError } from "@/lib/campaign/store";
 import { reviewMode } from "@/lib/mode";
 
@@ -52,6 +53,7 @@ export async function POST(req: Request) {
     if (b.action === "reset_review") {
       if (!reviewMode()) return NextResponse.json({ error: "Only available in the review build." }, { status: 403 });
       await resetCampaignReview();
+      await resetReview();
       return NextResponse.json({ ok: true });
     }
     const c = await getCampaign();

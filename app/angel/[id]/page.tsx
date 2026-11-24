@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/Festive";
 import { Ornament } from "@/components/Ornament";
 import ClaimForm from "@/components/ClaimForm";
-import { allChildren } from "@/lib/data";
-import { toPublic, pad } from "@/lib/child";
+import { getPublicChild } from "@/lib/tree";
+import { pad } from "@/lib/child";
 import { DRIVE } from "@/lib/drive";
 
 export const dynamic = "force-dynamic";
@@ -19,10 +19,8 @@ function List({ title, items }: { title: string; items: string[] }) {
 }
 
 export default async function AngelPage({ params }: { params: { id: string } }) {
-  const all = await allChildren();
-  const row = all.find((c) => c.id === params.id && c.approved);
-  if (!row) notFound();
-  const c = toPublic(row, all);
+  const c = await getPublicChild(params.id);
+  if (!c) notFound();
 
   return (
     <SiteShell>
@@ -36,10 +34,11 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
             <div>
               <span className="no">Angel</span>
               <h2 style={{ fontSize: "2.6rem", color: "var(--pine)" }}>{c.firstName}</h2>
-              <p className="muted">{[c.age != null ? `${c.age} years old` : "", c.gender || ""].filter(Boolean).join(" · ")}</p>
+              <p className="muted">{c.ageRange ? `Ages ${c.ageRange}` : [c.age != null ? `${c.age} years old` : "", c.gender || ""].filter(Boolean).join(" · ")}</p>
             </div>
           </div>
           <div className="facts">
+            {c.sizes && <div className="fact"><small>Sizes</small>{c.sizes}</div>}
             {c.tops && <div className="fact"><small>Shirt</small>{c.tops}</div>}
             {c.bottoms && <div className="fact"><small>Pants</small>{c.bottoms}</div>}
             {c.shoes && <div className="fact"><small>Shoes</small>{c.shoes}</div>}
@@ -68,7 +67,13 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
           )}
         </div>
         <div className="panel">
-          {c.available ? (
+          {c.ageRange ? (
+            <>
+              <div className="ribbon" />
+              <h3 style={{ marginBottom: 6 }}>Angel {c.code}</h3>
+              <p className="muted">Adoption for the 2027 drive opens when the drive launches. Sponsors only ever see an angel code, an age range and the shopping details the organizers approved.</p>
+            </>
+          ) : c.available ? (
             <>
               <div className="ribbon" />
               <h3 style={{ marginBottom: 6 }}>Adopt {c.firstName}</h3>

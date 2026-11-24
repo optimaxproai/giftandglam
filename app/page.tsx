@@ -1,16 +1,16 @@
 import { SiteShell } from "@/components/Festive";
 import TreeBrowser from "@/components/TreeBrowser";
-import { allChildren } from "@/lib/data";
-import { publicTree } from "@/lib/child";
+import { getPublicTree } from "@/lib/tree";
+import type { PublicChild } from "@/lib/types";
 import { DRIVE, daysUntil } from "@/lib/drive";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  let kids: ReturnType<typeof publicTree> = [];
+  let kids: PublicChild[] = [];
   let failed = false;
   try {
-    kids = publicTree(await allChildren());
+    kids = await getPublicTree();
   } catch {
     failed = true;
   }
