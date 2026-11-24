@@ -5,6 +5,7 @@ import { seedReview } from "./seed";
 import { createIntake } from "./service";
 import { ageRange, buildCard } from "./card";
 import { validateQuestions } from "./validate";
+import { cardToPublic } from "../tree";
 import type { Question } from "./types";
 
 const S = "2027";
@@ -190,5 +191,14 @@ describe("card helpers", () => {
     const c = buildCard(answers);
     expect(c.interests).toHaveLength(3);
     expect(JSON.stringify(c)).not.toContain("Hidden Name");
+  });
+});
+
+describe("2027 cards on the public tree", () => {
+  it("carry an empty gifts list so pages that read gift cards never crash", () => {
+    const pub = cardToPublic({ childId: "ch_x", applicationId: "app_x", code: "G27-001", card: { ageRange: "7–9", wishes: ["Bike"], needs: ["Coat"], sizes: "8", interests: [] } });
+    expect((pub as { gifts?: unknown }).gifts).toEqual([]);
+    expect(pub.code).toBe("G27-001");
+    expect(JSON.stringify(pub)).not.toMatch(/phone|email|parent|hardship/i);
   });
 });

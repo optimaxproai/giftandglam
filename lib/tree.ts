@@ -9,7 +9,10 @@ import type { PublicChild } from "./types";
 
 /** A 2027 card as sponsors see it: angel code, age range, shopping details. Nothing else exists to leak. */
 export function cardToPublic(p: PublishedCard): PublicChild {
+  // `gifts` (multi-card gift requests) is read by the tree and angel pages once that change is merged.
+  // 2027 cards never carry gift cards, so they always have an empty list. The cast keeps this compiling either way.
   return {
+    gifts: [],
     id: p.childId,
     no: Number(p.code.replace(/\D/g, "").slice(2)) || 0,
     firstName: p.code,
@@ -31,7 +34,7 @@ export function cardToPublic(p: PublishedCard): PublicChild {
     status: "available",
     hasPhoto: false,
     siblings: [],
-  };
+  } as PublicChild;
 }
 
 async function cards2027(): Promise<PublicChild[]> {
