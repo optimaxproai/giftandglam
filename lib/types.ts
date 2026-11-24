@@ -1,5 +1,6 @@
 export type Status = "available" | "claimed" | "purchased" | "returned" | "given";
 export type GiftStatus = "none" | "pledged" | "received";
+export type Decision = "pending" | "approved" | "needs_info" | "declined" | "set_aside";
 
 export type FamilyRow = {
   id: string;
@@ -39,6 +40,14 @@ export type ChildRow = {
   claimed_at: string | null;
   returned_at: string | null;
   organizer_notes: string | null;
+  /** Organizer decision. Separate from `approved`, which means "published on the public tree". */
+  decision: Decision;
+  decision_reason: string | null;
+  set_aside_code: "over_age" | "other" | null;
+  age_uncertain: boolean;
+  angel_code: string | null;
+  decided_at: string | null;
+  decided_by: string | null;
   family?: FamilyRow | null;
   sponsor?: SponsorRow | null;
 };
@@ -62,6 +71,8 @@ export type PublicChild = {
   status: Status;
   hasPhoto: boolean;
   siblings: { id: string; firstName: string; age: number | null; available: boolean }[];
+  /** The public label for this angel. Sponsors never see a name. */
+  code: string;
 };
 
 export const STATUS_LABEL: Record<Status, string> = {

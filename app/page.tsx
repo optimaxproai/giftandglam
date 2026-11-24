@@ -27,7 +27,7 @@ export default async function Home() {
           <em>this Christmas.</em>
         </h1>
         <p className="lead">
-          Pick an angel, shop their wish list, and bring the gifts back unwrapped. Every card shows a first name, an age and sizes only. Families keep their private details with the organizers.
+          Pick an angel, shop their wish list, and bring the gifts back unwrapped. Every card shows an angel code, an age and sizes only. Names and private details stay with the organizers.
         </p>
       </div>
       <div className="tag">

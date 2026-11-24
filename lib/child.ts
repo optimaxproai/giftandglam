@@ -1,18 +1,23 @@
 import type { ChildRow, PublicChild } from "./types";
 
+/** Children on the public tree: published (`approved`) AND decided "approved" AND holding an angel code. */
+export const onTree = (c: ChildRow) => c.approved && c.decision === "approved" && !!c.angel_code;
+
 /**
  * The ONLY place a ChildRow becomes something a sponsor can see.
- * No full name, no family or parent details, no organizer notes, no sponsor identity.
- * Siblings are limited to first name + age of approved children in the same family.
+ * The angel code stands in for every name. No photo, no parent or contact details, no hardship story,
+ * no organizer notes, no sponsor identity. Siblings appear only as codes.
  */
 export function toPublic(c: ChildRow, all: ChildRow[]): PublicChild {
+  const code = c.angel_code || "";
   const siblings = all
-    .filter((s) => s.family_id === c.family_id && s.id !== c.id && s.approved)
-    .map((s) => ({ id: s.id, firstName: s.first_name, age: s.age, available: s.status === "available" }));
+    .filter((s) => s.family_id === c.family_id && s.id !== c.id && onTree(s))
+    .map((s) => ({ id: s.id, firstName: s.angel_code || "", age: s.age, available: s.status === "available" }));
   return {
     id: c.id,
     no: c.no,
-    firstName: c.first_name,
+    code,
+    firstName: code, // components that print firstName show the code: names never reach the public
     age: c.age,
     gender: c.gender,
     tops: c.tops,
@@ -25,13 +30,13 @@ export function toPublic(c: ChildRow, all: ChildRow[]): PublicChild {
     gift: c.gift_store && c.gift_amount ? { store: c.gift_store, amount: c.gift_amount } : null,
     available: c.status === "available",
     status: c.status,
-    hasPhoto: !!c.photo_path && c.photo_public,
+    hasPhoto: false, // photos stay with organizers
     siblings,
   };
 }
 
 export function publicTree(all: ChildRow[]): PublicChild[] {
-  return all.filter((c) => c.approved).map((c) => toPublic(c, all));
+  return all.filter(onTree).map((c) => toPublic(c, all));
 }
 
 export function pad(no: number): string {

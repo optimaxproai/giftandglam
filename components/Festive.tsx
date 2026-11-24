@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { DRIVE } from "@/lib/drive";
 import { demoMode } from "@/lib/demo";
+import { reviewMode } from "@/lib/mode";
 
 /** Deterministic flakes (no randomness, so server and client markup match). */
 export function Snow() {
@@ -54,7 +55,11 @@ export function Tree({ size = 38 }: { size?: number }) {
 export function SiteShell({ children, hero, admin = false }: { children: ReactNode; hero?: ReactNode; admin?: boolean }) {
   return (
     <>
-      {demoMode() && <div className="demo">Demo mode: 60 fictional children, read-only. Not connected to a database.</div>}
+      {reviewMode() ? (
+        <div className="demo">Review build: every name, contact and answer here is fictional. Nothing is saved to a real database.</div>
+      ) : (
+        demoMode() && <div className="demo">Demo mode: 60 fictional children, read-only. Not connected to a database.</div>
+      )}
       <div className="sky">
         <Snow />
         <div className="sky-in" style={admin ? { paddingBottom: 18 } : undefined}>
@@ -71,9 +76,11 @@ export function SiteShell({ children, hero, admin = false }: { children: ReactNo
               {admin ? (
                 <>
                   <Link href="/admin">Overview</Link>
+                  <Link href="/admin/households">Households</Link>
                   <Link href="/admin/import">Import</Link>
                   <Link href="/admin/children">Children</Link>
                   <Link href="/admin/sponsors">Sponsors</Link>
+                  <Link href="/admin/print">Print labels</Link>
                   <Link href="/admin/account">Account</Link>
                   <Link href="/">View tree</Link>
                 </>

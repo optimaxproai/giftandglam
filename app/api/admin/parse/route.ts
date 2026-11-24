@@ -16,16 +16,59 @@ const Body = z.object({
 /** Canned, fictional answer so the import screen can be tried without an API key. */
 const DEMO: DraftFamily[] = [
   {
-    parentName: "Dana Whitfield",
-    phone: "404-555-0123",
-    email: "dana.whitfield@example.com",
-    story: "Sample request. This year has been hard and a little extra help would mean a lot to my kids.",
+    parentName: "Jordan Demo",
+    phone: "404-555-0107",
+    email: "jordan.demo@example.com",
+    story: "This fictional household is testing the gift drive intake form.",
     children: [
-      { fullName: "Nia Whitfield", age: 16, gender: "Girl", tops: "Adult XS", bottoms: "Adult XS", shoes: "7", wants: ["Red glitter makeup brush set", "Lash clusters kit", "Candles", "Waist beads", "Perfume"], needs: ["Edge control", "Bras 34 B or C", "Socks", "Underwear", "Pajamas"], faves: [], favColor: "Red and black", giftStore: "Ulta", giftAmount: 25, photo: { page: 1, box: { x: 0.08, y: 0.1, w: 0.25, h: 0.2 } } },
-      { fullName: "Trey Whitfield", age: 14, gender: "Boy", tops: "Boys 16", bottoms: "34", shoes: "9 1/2", wants: ["LEGO set", "Rhinestone bedazzling kit", "Wearable heated blanket", "Squishies"], needs: ["Hoodie, size large, black", "Underwear size 16 boys", "Socks", "Body care"], faves: [], favColor: "", giftStore: "Hot Topic", giftAmount: 25, photo: { page: 1, box: { x: 0.36, y: 0.1, w: 0.25, h: 0.2 } } },
-      { fullName: "Tori Whitfield", age: 13, gender: "Girl", tops: "Adult XS", bottoms: "Adult XS", shoes: "6", wants: ["Pomegranate raspberry body wash and lotion", "Aesthetic school supplies", "Wooden book lamp", "Soft bean bag chair (blue)", "Yellow sweatshirt"], needs: ["Crew socks", "Underwear", "Sports bra", "Edge control", "Pajamas"], faves: [], favColor: "Blue", giftStore: "Miss A", giftAmount: 25, photo: { page: 1, box: { x: 0.64, y: 0.1, w: 0.25, h: 0.2 } } },
-    ],
-  },
+      {
+        fullName: "Rowan Demo",
+        age: 8,
+        gender: "Boy",
+        tops: "Youth M",
+        bottoms: "Youth 8",
+        shoes: "Youth 2",
+        wants: [
+          "Space-themed jigsaw puzzle",
+          "Watercolor pencils"
+        ],
+        needs: [
+          "Insulated lunch bag"
+        ],
+        faves: [
+          "Astronomy",
+          "Painting"
+        ],
+        favColor: "Orange",
+        giftStore: "",
+        giftAmount: 25,
+        photo: null
+      },
+      {
+        fullName: "Piper Demo",
+        age: 11,
+        gender: "Girl",
+        tops: "Youth L",
+        bottoms: "Youth 12",
+        shoes: "Youth 5",
+        wants: [
+          "Beginner origami kit",
+          "Birdwatching guide"
+        ],
+        needs: [
+          "Reusable water bottle"
+        ],
+        faves: [
+          "Paper crafts",
+          "Birdwatching"
+        ],
+        favColor: "Teal",
+        giftStore: "",
+        giftAmount: 25,
+        photo: null
+      }
+    ]
+  }
 ];
 
 export async function POST(req: Request) {

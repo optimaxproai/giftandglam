@@ -32,9 +32,9 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
       <div className="cols">
         <div className="panel" style={{ display: "grid", gap: 16 }}>
           <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
-            <Ornament id={c.id} name={c.firstName} photo={c.hasPhoto} big />
+            <Ornament id={c.id} name="★" photo={false} big />
             <div>
-              <span className="no">Angel No. {pad(c.no)}</span>
+              <span className="no">Angel</span>
               <h2 style={{ fontSize: "2.6rem", color: "var(--pine)" }}>{c.firstName}</h2>
               <p className="muted">{[c.age != null ? `${c.age} years old` : "", c.gender || ""].filter(Boolean).join(" · ")}</p>
             </div>
@@ -58,7 +58,7 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
               <div className="sibs">
                 {c.siblings.map((s) => (
                   <Link key={s.id} href={`/angel/${s.id}`} className="sib">
-                    <Ornament id={s.id} name={s.firstName} photo={false} />
+                    <Ornament id={s.id} name="★" photo={false} />
                     <div style={{ flex: 1 }}><b>{s.firstName}</b> <span className="muted">{s.age != null ? `· ${s.age}` : ""}</span></div>
                     <span className={`pill ${s.available ? "available" : "claimed"}`}>{s.available ? "Available" : "Sponsored"}</span>
                   </Link>

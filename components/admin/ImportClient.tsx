@@ -27,8 +27,6 @@ type Fam = {
   phone: string;
   email: string;
   story: string;
-  photosOk: boolean;
-  approve: boolean;
   kids: Kid[];
   state: "draft" | "saving" | "saved" | "error";
   msg: string;
@@ -144,8 +142,6 @@ export default function ImportClient() {
           phone: f.phone,
           email: f.email,
           story: f.story,
-          photosOk: false,
-          approve: false,
           kids: f.children.map((c) => toKid(c, canvases)),
           state: "draft",
           msg: "",
@@ -210,8 +206,6 @@ export default function ImportClient() {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         family: { parentName: f.parentName, phone: f.phone, email: f.email, story: f.story, source: f.label },
-        photosOk: f.photosOk,
-        approve: f.approve,
         children: kids.map((k) => ({
           fullName: k.fullName,
           age: k.age === "" ? null : Number(k.age),
@@ -234,7 +228,7 @@ export default function ImportClient() {
     const made = (j.created || []).map((c: { name: string; no: number }) => `${c.name} (No. ${String(c.no).padStart(2, "0")})`).join(", ");
     setFam(f.key, {
       state: "saved",
-      msg: `${made || "Nothing new"} ${f.approve ? "added to the tree" : "saved as hidden drafts"}${j.merged ? ", joined an existing family" : ""}${j.skipped?.length ? `. Skipped duplicates: ${j.skipped.join(", ")}` : ""}.`,
+      msg: `${made || "Nothing new"} saved to Households for review${j.merged ? ", joined an existing family" : ""}${j.skipped?.length ? `. Skipped duplicates: ${j.skipped.join(", ")}` : ""}.`,
     });
   }
 
@@ -316,8 +310,7 @@ export default function ImportClient() {
           ))}
 
           <div style={{ borderTop: "2px dotted var(--line)", marginTop: 14, paddingTop: 12 }}>
-            <label className="check"><input type="checkbox" checked={f.approve} onChange={(e) => setFam(f.key, { approve: e.target.checked })} /><span>Publish to the tree now. Leave unchecked to save as hidden drafts.</span></label>
-            <label className="check"><input type="checkbox" checked={f.photosOk} onChange={(e) => setFam(f.key, { photosOk: e.target.checked })} /><span>The parent agreed to show their children&apos;s photos to sponsors. Left unticked, photos stay with organizers only.</span></label>
+            <p className="muted" style={{ fontSize: ".86rem", marginBottom: 8 }}>Children are saved as <b>Needs review</b>. The season age limit is applied automatically; approve and publish them from Households. Photos stay with organizers.</p>
             {f.msg && <div className={f.state === "saved" ? "ok" : "err"} role="status">{f.msg}</div>}
             <div className="acts">
               <button className="btn" onClick={() => save(f)} disabled={f.state === "saving" || f.state === "saved"}>{f.state === "saved" ? "Saved" : "Save family"}</button>

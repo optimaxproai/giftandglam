@@ -32,10 +32,10 @@ export default async function Sponsors() {
                   <tr key={c.id}>
                     <td><b>{c.sponsor!.name}</b></td>
                     <td>{c.sponsor!.phone || ""}<br />{c.sponsor!.email}</td>
-                    <td><Link href={`/admin/children/${c.id}`}>No. {pad(c.no)} {c.first_name}</Link></td>
+                    <td><Link href={`/admin/children/${c.id}`}>{c.angel_code} {c.first_name}</Link></td>
                     <td><span className="pill claimed">{STATUS_LABEL[c.status]}</span></td>
                     <td style={{ maxWidth: 360, fontSize: ".82rem" }}>
-                      {open ? <span className="muted">{`Hi ${first}, thank you for sponsoring ${c.first_name} (Angel No. ${pad(c.no)}). Gifts are due back unwrapped by ${DRIVE.returnByLabel}. Reply here if you need anything.`}</span> : <span className="muted">Done</span>}
+                      {open ? <span className="muted">{`Hi ${first}, thank you for sponsoring Angel ${c.angel_code}. Gifts are due back unwrapped by ${DRIVE.returnByLabel}. Reply here if you need anything.`}</span> : <span className="muted">Done</span>}
                     </td>
                   </tr>
                 );

@@ -1,8 +1,9 @@
 import type { ChildRow, FamilyRow, SponsorRow, Status } from "./types";
+import { reviewMode } from "./mode";
 
 /** Local preview only. Never active on a Vercel production deployment. */
 export function demoMode(): boolean {
-  return process.env.ANGEL_DEMO === "1" && process.env.VERCEL_ENV !== "production";
+  return (process.env.ANGEL_DEMO === "1" && process.env.VERCEL_ENV !== "production") || reviewMode();
 }
 
 const GIRLS = ["Aaliyah", "Brielle", "Camila", "Dani", "Eden", "Faith", "Gianna", "Harper", "Imani", "Jada", "Kennedy", "Layla", "Maya", "Nia", "Olivia", "Paisley", "Quinn", "Riley", "Skylar", "Tessa", "Unique", "Zuri", "Amara", "Bria", "Cora", "Dasia", "Elise", "Fatima", "Gracie", "Hana", "Ivy", "Jordyn", "Kiara", "Lena", "Mila", "Nora"];
@@ -91,6 +92,13 @@ export function demoChildren(): ChildRow[] {
         claimed_at: claimed ? new Date(2026, 10, 8 + (i % 14)).toISOString() : null,
         returned_at: status === "returned" ? new Date(2026, 10, 20).toISOString() : null,
         organizer_notes: null,
+        decision: "approved",
+        decision_reason: null,
+        set_aside_code: null,
+        age_uncertain: false,
+        angel_code: `G26-${String(i + 1).padStart(3, "0")}`,
+        decided_at: null,
+        decided_by: null,
         family: fam,
         sponsor,
       });

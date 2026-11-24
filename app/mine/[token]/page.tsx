@@ -43,8 +43,8 @@ export default async function Mine({ params }: { params: { token: string } }) {
             const idx = STATUS_ORDER.indexOf(row.status);
             return (
               <div key={c.id} className="orn">
-                <Ornament id={c.id} name={c.firstName} photo={c.hasPhoto} />
-                <div className="no" style={{ textAlign: "center" }}>No. {pad(c.no)} · <span className={`pill ${row.status}`}>{STATUS_LABEL[row.status]}</span></div>
+                <Ornament id={c.id} name="★" photo={false} />
+                <div className="no" style={{ textAlign: "center" }}>Angel · <span className={`pill ${row.status}`}>{STATUS_LABEL[row.status]}</span></div>
                 <h3>{c.firstName}<span>{c.age != null ? `${c.age} · ` : ""}shirt {c.tops || "?"} · shoes {c.shoes || "?"}</span></h3>
                 <div style={{ display: "flex", gap: 4 }} aria-hidden="true">
                   {STATUS_ORDER.slice(1).map((s, i) => <i key={s} style={{ flex: 1, height: 6, borderRadius: 99, background: i < idx ? "var(--pine)" : "var(--line)" }} />)}
