@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { readGiftCards } from "@/lib/giftCards";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/Festive";
 import { Ornament } from "@/components/Ornament";
@@ -34,7 +35,7 @@ export default async function AdminChild({ params }: { params: { id: string } })
       </div>
       <div className="cols">
         <ChildEditor
-          child={{ id: c.id, fullName: c.full_name, age: c.age, gender: c.gender, tops: c.tops || "", bottoms: c.bottoms || "", shoes: c.shoes || "", wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.fav_color || "", giftStore: c.gift_store || "", giftAmount: c.gift_amount, photo: !!c.photo_path, photoPublic: c.photo_public, approved: c.approved, notes: c.organizer_notes || "" }}
+          child={{ id: c.id, fullName: c.full_name, age: c.age, gender: c.gender, tops: c.tops || "", bottoms: c.bottoms || "", shoes: c.shoes || "", wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.fav_color || "", giftCards: readGiftCards(c), photo: !!c.photo_path, photoPublic: c.photo_public, approved: c.approved, notes: c.organizer_notes || "" }}
           family={{ parentName: fam?.parent_name || "", phone: fam?.phone || "", email: fam?.email || "", story: fam?.story || "" }}
         />
         <div style={{ display: "grid", gap: 16 }}>
@@ -67,7 +68,7 @@ export default async function AdminChild({ params }: { params: { id: string } })
             ) : (
               <p className="muted">No sponsor yet.</p>
             )}
-            {c.gift_store && <p style={{ margin: "10px 0" }}>Gift card: ${c.gift_amount} {c.gift_store} ({c.gift_card_status === "none" ? "not pledged" : c.gift_card_status})</p>}
+            {readGiftCards(c).length > 0 && <div style={{ margin: "10px 0" }}><b>Gift cards ({c.gift_card_status === "none" ? "not pledged" : c.gift_card_status})</b><ul className="list">{readGiftCards(c).map((gift, i) => <li key={i}>${gift.amount} {gift.store}</li>)}</ul></div>}
             <div style={{ marginTop: 12 }}><StatusButtons id={c.id} status={c.status} gift={c.gift_card_status} /></div>
           </div>
         </div>

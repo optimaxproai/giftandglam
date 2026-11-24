@@ -1,9 +1,13 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { DECISION_LABEL } from "@/lib/campaign/rules";
+import type { Decision } from "@/lib/types";
 import { CARDSTOCK, DEFAULT_CUSTOM_LAYOUT, STOCKS, customStock, defaultStock, paginate, stockById, type CustomLabelLayout, type LabelStockSetting, type Stock } from "@/lib/print";
 
-export type PrintItem = { id: string; code: string; family: string; gender: string; age: string; published: boolean; status: string };
+export type PrintItem = { id: string; code: string; family: string; gender: string; age: string; published: boolean; status: string; name: string; familyId: string; decision: Decision };
+const printable = (item: PrintItem) => item.decision === "approved" && !!item.code;
 
 const PAPER_SIZES = [
   { id: "letter", name: "US Letter (8.5 × 11 in)", width: 8.5, height: 11 },
@@ -27,6 +31,7 @@ export default function PrintClient({ items, savedStock }: { items: PrintItem[];
   const initialLayout = saved.id === "custom" && savedStock && typeof savedStock === "object" ? savedStock : DEFAULT_CUSTOM_LAYOUT;
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [format, setFormat] = useState<"cardstock" | "labels" | "custom">(saved.id === "cardstock" || saved.id === "custom" ? saved.id : "labels");
   const [labelId, setLabelId] = useState(typeof savedStock === "string" && saved.id !== "cardstock" ? savedStock : "");
   const [paperSize, setPaperSize] = useState(() => PAPER_SIZES.find((paper) => paper.width === initialLayout.pageWidth && paper.height === initialLayout.pageHeight)?.id ?? "custom");
@@ -34,8 +39,8 @@ export default function PrintClient({ items, savedStock }: { items: PrintItem[];
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const visible = useMemo(() => items.filter((i) => (filter === "tree" ? i.published : filter === "unpublished" ? !i.published : filter === "sponsored" ? i.status !== "available" : true)), [items, filter]);
-  const chosen = items.filter((i) => picked.has(i.id));
+  const visible = useMemo(() => items.filter((i) => (filter === "tree" ? i.published : filter === "unpublished" ? printable(i) && !i.published : filter === "sponsored" ? i.published && i.status !== "available" : filter === "approved" ? printable(i) : filter === "review" ? !printable(i) : true) && [i.name, i.family, i.code].join(" ").toLowerCase().includes(search.trim().toLowerCase())), [items, filter, search]);
+  const chosen = items.filter((i) => printable(i) && picked.has(i.id));
   const custom = customStock(layout);
   const stock = format === "cardstock" ? CARDSTOCK : format === "custom" ? custom.stock : stockById(labelId);
   const paperName = stock?.page
@@ -95,19 +100,21 @@ export default function PrintClient({ items, savedStock }: { items: PrintItem[];
             <h3 style={{ marginBottom: 8 }}>1. Choose angels</h3>
             <div className="acts" style={{ marginBottom: 10 }}>
               <select aria-label="Show" value={filter} onChange={(e) => setFilter(e.target.value)} style={{ border: "2px solid var(--line)", borderRadius: 12, padding: "6px 10px" }}>
-                <option value="all">All approved angels</option><option value="tree">On the tree</option><option value="unpublished">Approved, not published</option><option value="sponsored">Sponsored</option>
+                <option value="all">All child requests</option><option value="approved">Approved angels</option><option value="review">Awaiting approval / set aside</option><option value="tree">On the tree</option><option value="unpublished">Approved, not published</option><option value="sponsored">Sponsored</option>
               </select>
-              <button className="btn sm ghost" onClick={() => setPicked(new Set(visible.map((v) => v.id)))}>Select all shown</button>
+              <button className="btn sm ghost" onClick={() => setPicked(new Set(visible.filter(printable).map((v) => v.id)))}>Select all approved shown</button>
               <button className="btn sm ghost" onClick={() => setPicked(new Set())}>Clear</button>
             </div>
-            {items.length === 0 ? <p className="muted">Approved angels appear here once you approve a child.</p> : (
+            <div className="field"><input type="search" aria-label="Search angels" placeholder="Search child, parent or code" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+            {visible.length === 0 ? <p className="muted">{items.length ? "No matching requests." : "Enter a household to get started."}</p> : (
               <div className="tw" style={{ maxHeight: 360, overflowY: "auto" }}>
                 <table>
-                  <thead><tr><th></th><th>Angel</th><th>Parent</th><th>Gender</th><th>Age</th></tr></thead>
+                  <thead><tr><th></th><th>Angel / child</th><th>Parent</th><th>Gender</th><th>Age</th><th>Status</th></tr></thead>
                   <tbody>{visible.map((i) => (
                     <tr key={i.id}>
-                      <td><input type="checkbox" aria-label={`Select ${i.code}`} checked={picked.has(i.id)} onChange={() => toggle(i.id)} /></td>
-                      <td><b>{i.code}</b></td><td>{i.family}</td><td>{i.gender}</td><td>{i.age}</td>
+                      <td><input type="checkbox" aria-label={`Select ${i.code || i.name}`} disabled={!printable(i)} checked={printable(i) && picked.has(i.id)} onChange={() => toggle(i.id)} /></td>
+                      <td><b>{i.code || "Pending"}</b><br /><span className="muted">{i.name}</span></td><td>{i.family}</td><td>{i.gender}</td><td>{i.age}</td>
+                      <td>{printable(i) ? "Ready to print" : <Link href={`/admin/households/${i.familyId}`}>{DECISION_LABEL[i.decision]} · Review</Link>}</td>
                     </tr>))}</tbody>
                 </table>
               </div>

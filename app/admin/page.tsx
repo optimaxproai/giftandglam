@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getCampaign } from "@/lib/campaign";
 import { DRIVE, daysUntil } from "@/lib/drive";
 import { STATUS_LABEL, STATUS_ORDER } from "@/lib/types";
+import { readGiftCards } from "@/lib/giftCards";
 
 export const dynamic = "force-dynamic";
 
@@ -16,9 +17,9 @@ export default async function AdminHome() {
   const tree = rows.filter((x) => x.approved);
   const count = Object.fromEntries(STATUS_ORDER.map((st) => [st, tree.filter((x) => x.status === st).length])) as Record<string, number>;
   const out = count.claimed + count.purchased;
-  const gcAsk = tree.filter((x) => x.gift_store).reduce((n, x) => n + (x.gift_amount || 0), 0);
-  const gcIn = tree.filter((x) => x.gift_store && x.gift_card_status !== "none").reduce((n, x) => n + (x.gift_amount || 0), 0);
-  const gcPending = tree.filter((x) => x.gift_card_status === "pledged").length;
+  const gcAsk = tree.flatMap(readGiftCards).reduce((n, gift) => n + gift.amount, 0);
+  const gcIn = tree.filter((x) => x.gift_card_status !== "none").flatMap(readGiftCards).reduce((n, gift) => n + gift.amount, 0);
+  const gcPending = tree.filter((x) => x.gift_card_status === "pledged").flatMap(readGiftCards).length;
   const approvedNotPublished = s.approved - s.published;
   const dl = daysUntil(DRIVE.returnBy);
 

@@ -7,6 +7,7 @@ import { demoMode } from "@/lib/demo";
 import { firstName, normEmail, normPhone } from "@/lib/families";
 import { removeChildPhoto, saveChildPhoto } from "@/lib/photos";
 import { db } from "@/lib/supabase/admin";
+import { GiftCardsSchema, giftCardFields, readGiftCards } from "@/lib/giftCards";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ const Patch = z
     faves: list.refine((a) => a.length <= 3, "At most 3 favorites"),
     fav_color: str, gift_store: str,
     gift_amount: z.number().int().min(5).max(200).nullable(),
+    gift_cards: GiftCardsSchema,
     organizer_notes: z.string().trim().max(2000).nullable(),
   })
   .partial();
@@ -47,8 +49,21 @@ export async function POST(req: Request) {
   try {
     if (b.action === "update") {
       if (b.patch && Object.keys(b.patch).length) {
-        const { age, ...rest } = b.patch;
+        const { age, gift_cards, gift_store, gift_amount, ...rest } = b.patch;
         const patch: Record<string, unknown> = { ...rest };
+        if (gift_cards !== undefined || gift_store !== undefined || gift_amount !== undefined) {
+          const current = (await store.list()).find((x) => x.id === b.id);
+          if (!current) throw new CampaignError("Child not found.", "not_found");
+          const previous = readGiftCards(current);
+          const storeName = gift_store === undefined ? previous[0]?.store : gift_store;
+          const amount = gift_amount === undefined ? previous[0]?.amount : gift_amount;
+          const next = gift_cards ?? [...(storeName && amount ? [{ store: storeName, amount }] : []), ...previous.slice(1)];
+          const changed = previous.length !== next.length || previous.some((card, i) => card.store !== next[i]?.store || card.amount !== next[i]?.amount);
+          if (current.gift_card_status !== "none" && changed) {
+            throw new CampaignError("A gift card pledge or receipt is recorded. Clear that status before changing the gift card list.", "conflict");
+          }
+          Object.assign(patch, giftCardFields(next));
+        }
         if (rest.full_name) patch.first_name = firstName(rest.full_name);
         if (Object.keys(patch).length) await store.patchChild(b.id, patch);
         if (age !== undefined) await campaign.setAge(b.id, age, false, admin.email); // the age rule runs on every age change

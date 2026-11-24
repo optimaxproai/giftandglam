@@ -102,6 +102,7 @@ export type DraftChild = {
   favColor: string;
   giftStore: string;
   giftAmount: number;
+  giftCards?: { store: string; amount: number }[];
   photo: { page: number; box: { x: number; y: number; w: number; h: number } } | null;
 };
 export type DraftFamily = { parentName: string; phone: string; email: string; story: string; children: DraftChild[] };
@@ -164,6 +165,7 @@ export function normalizeParsed(raw: z.infer<typeof ParsedSchema>): DraftFamily[
             favColor: clean(c.favorite_color),
             giftStore: uniq(stores)[0] || "",
             giftAmount: 25,
+            giftCards: uniq(stores).slice(0, 40).map((store) => ({ store, amount: 25 })),
             photo,
           };
         }),

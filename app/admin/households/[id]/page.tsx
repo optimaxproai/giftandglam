@@ -27,7 +27,6 @@ export default async function HouseholdPage({ params }: { params: { id: string }
           <h2 style={{ marginTop: 10 }}>{h.family.parent_name}</h2>
           <p className="muted">{h.children.length} child{h.children.length === 1 ? "" : "ren"} · {h.family.source_label || "Printed email"} · season age limit {maxAge}</p>
         </div>
-        <Link className="btn ghost sm" href={`/admin/children/${h.children[0].id}`}>Edit full details</Link>
       </div>
       <div style={{ maxWidth: 900 }}>
         <HouseholdPanel family={{ id: h.family.id, parentName: h.family.parent_name, phone: h.family.phone || "", email: h.family.email || "", story: h.family.story || "" }} kids={kids} maxAge={maxAge} />

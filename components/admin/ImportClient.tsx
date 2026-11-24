@@ -1,7 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
 import { useRef, useState } from "react";
 import type { DraftFamily } from "@/lib/parseSchema";
+import ItemListEditor, { cleanListItems } from "./ItemListEditor";
+import SizeField from "./SizeField";
+import GiftCardEditor from "./GiftCardEditor";
+import { cleanGiftCards, type GiftCard } from "@/lib/giftCards";
 
 type Kid = {
   key: string;
@@ -12,12 +17,12 @@ type Kid = {
   tops: string;
   bottoms: string;
   shoes: string;
-  wants: string;
-  needs: string;
-  faves: string;
+  wants: string[];
+  needs: string[];
+  faves: string[];
   favColor: string;
-  giftStore: string;
-  giftAmount: string;
+  giftCards: GiftCard[];
+  notes: string;
   photo: string | null;
 };
 type Fam = {
@@ -30,6 +35,7 @@ type Fam = {
   kids: Kid[];
   state: "draft" | "saving" | "saved" | "error";
   msg: string;
+  familyId?: string;
 };
 
 const MAX_PAGES = 8;
@@ -105,17 +111,15 @@ function toKid(c: DraftFamily["children"][number], canvases: HTMLCanvasElement[]
     tops: c.tops,
     bottoms: c.bottoms,
     shoes: c.shoes,
-    wants: c.wants.join("\n"),
-    needs: c.needs.join("\n"),
-    faves: c.faves.join(", "),
+    wants: c.wants,
+    needs: c.needs,
+    faves: c.faves,
     favColor: c.favColor,
-    giftStore: c.giftStore,
-    giftAmount: String(c.giftAmount || 25),
+    giftCards: c.giftCards ?? (c.giftStore ? [{ store: c.giftStore, amount: c.giftAmount || 25 }] : []),
+    notes: "",
     photo,
   };
 }
-
-const splitLines = (t: string) => t.split("\n").map((s) => s.trim()).filter(Boolean);
 
 export default function ImportClient() {
   const [fams, setFams] = useState<Fam[]>([]);
@@ -196,7 +200,7 @@ export default function ImportClient() {
     if (!f.parentName.trim()) return setFam(f.key, { state: "error", msg: "Add the parent's name." });
     if (!kids.length) return setFam(f.key, { state: "error", msg: "Tick at least one child." });
     for (const k of kids) {
-      const n = splitLines(k.wants).length + splitLines(k.needs).length;
+      const n = cleanListItems(k.wants).length + cleanListItems(k.needs).length;
       if (!k.fullName.trim()) return setFam(f.key, { state: "error", msg: "Every child needs a name." });
       if (n === 0) return setFam(f.key, { state: "error", msg: `${k.fullName} has no wants or needs yet.` });
     }
@@ -213,12 +217,14 @@ export default function ImportClient() {
           tops: k.tops,
           bottoms: k.bottoms,
           shoes: k.shoes,
-          wants: splitLines(k.wants),
-          needs: splitLines(k.needs),
-          faves: k.faves.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 3),
+          wants: cleanListItems(k.wants),
+          needs: cleanListItems(k.needs),
+          faves: cleanListItems(k.faves),
           favColor: k.favColor,
-          giftStore: k.giftStore,
-          giftAmount: Number(k.giftAmount) || 25,
+          giftStore: k.giftCards[0]?.store || "",
+          giftAmount: k.giftCards[0]?.amount || 25,
+          giftCards: cleanGiftCards(k.giftCards),
+          notes: k.notes,
           photo: k.photo,
         })),
       }),
@@ -228,6 +234,7 @@ export default function ImportClient() {
     const made = (j.created || []).map((c: { name: string; no: number }) => `${c.name} (No. ${String(c.no).padStart(2, "0")})`).join(", ");
     setFam(f.key, {
       state: "saved",
+      familyId: j.familyId,
       msg: `${made || "Nothing new"} saved to Households for review${j.merged ? ", joined an existing family" : ""}${j.skipped?.length ? `. Skipped duplicates: ${j.skipped.join(", ")}` : ""}.`,
     });
   }
@@ -264,7 +271,7 @@ export default function ImportClient() {
           </div>
           <div className="panel private" style={{ marginTop: 12 }}>
             <h3 style={{ marginBottom: 10 }}>Parent or guardian</h3>
-            <div className="three">
+            <div className="three aligned-fields">
               <div className="field"><label className="lbl">Name</label><input value={f.parentName} onChange={(e) => setFam(f.key, { parentName: e.target.value })} /></div>
               <div className="field"><label className="lbl">Phone</label><input value={f.phone} onChange={(e) => setFam(f.key, { phone: e.target.value })} /></div>
               <div className="field"><label className="lbl">Email</label><input value={f.email} onChange={(e) => setFam(f.key, { email: e.target.value })} /></div>
@@ -286,25 +293,25 @@ export default function ImportClient() {
               </div>
               <div>
                 <label className="check"><input type="checkbox" checked={k.include} onChange={(e) => setKid(f.key, k.key, { include: e.target.checked })} /><span><b>Add {k.fullName || "this child"} to the tree</b></span></label>
-                <div className="three">
+                <div className="three aligned-fields">
                   <div className="field"><label className="lbl">Full name (private)</label><input value={k.fullName} onChange={(e) => setKid(f.key, k.key, { fullName: e.target.value })} /></div>
                   <div className="field"><label className="lbl">Age</label><input type="number" min={0} max={21} value={k.age} onChange={(e) => setKid(f.key, k.key, { age: e.target.value })} /></div>
                   <div className="field"><label className="lbl">Gender</label><select value={k.gender} onChange={(e) => setKid(f.key, k.key, { gender: e.target.value })}><option value="">Not stated</option><option>Girl</option><option>Boy</option><option>Other</option></select></div>
                 </div>
-                <div className="three">
-                  <div className="field"><label className="lbl">Shirt</label><input value={k.tops} onChange={(e) => setKid(f.key, k.key, { tops: e.target.value })} /></div>
-                  <div className="field"><label className="lbl">Pants</label><input value={k.bottoms} onChange={(e) => setKid(f.key, k.key, { bottoms: e.target.value })} /></div>
-                  <div className="field"><label className="lbl">Shoes</label><input value={k.shoes} onChange={(e) => setKid(f.key, k.key, { shoes: e.target.value })} /></div>
+                <div className="three aligned-fields">
+                  <SizeField kind="shirt" value={k.tops} onChange={(tops) => setKid(f.key, k.key, { tops })} />
+                  <SizeField kind="pants" value={k.bottoms} onChange={(bottoms) => setKid(f.key, k.key, { bottoms })} />
+                  <SizeField kind="shoes" value={k.shoes} onChange={(shoes) => setKid(f.key, k.key, { shoes })} />
                 </div>
                 <div className="two">
-                  <div className="field"><label className="lbl">Wants (one per line)</label><textarea value={k.wants} onChange={(e) => setKid(f.key, k.key, { wants: e.target.value })} /></div>
-                  <div className="field"><label className="lbl">Needs (one per line)</label><textarea value={k.needs} onChange={(e) => setKid(f.key, k.key, { needs: e.target.value })} /></div>
+                  <ItemListEditor kind="wants" items={k.wants} onChange={(wants) => setKid(f.key, k.key, { wants })} disabled={f.state === "saving" || f.state === "saved"} />
+                  <ItemListEditor kind="needs" items={k.needs} onChange={(needs) => setKid(f.key, k.key, { needs })} disabled={f.state === "saving" || f.state === "saved"} />
                 </div>
-                <div className="three">
-                  <div className="field"><label className="lbl">Favorites (max 3)</label><input value={k.faves} onChange={(e) => setKid(f.key, k.key, { faves: e.target.value })} /></div>
-                  <div className="field"><label className="lbl">Gift card store</label><input value={k.giftStore} onChange={(e) => setKid(f.key, k.key, { giftStore: e.target.value })} /></div>
-                  <div className="field"><label className="lbl">Gift card amount ($)</label><input type="number" min={5} max={200} value={k.giftAmount} onChange={(e) => setKid(f.key, k.key, { giftAmount: e.target.value })} /></div>
+                <div className="two">
+                  <ItemListEditor kind="interests" items={k.faves} onChange={(faves) => setKid(f.key, k.key, { faves })} disabled={f.state === "saving" || f.state === "saved"} />
+                  <GiftCardEditor cards={k.giftCards} onChange={(giftCards) => setKid(f.key, k.key, { giftCards })} disabled={f.state === "saving" || f.state === "saved"} />
                 </div>
+                <div className="field"><label className="lbl" htmlFor={`notes-${k.key}`}>Additional notes (private)</label><textarea id={`notes-${k.key}`} value={k.notes} maxLength={1000} onChange={(e) => setKid(f.key, k.key, { notes: e.target.value })} /></div>
               </div>
             </div>
           ))}
@@ -314,6 +321,7 @@ export default function ImportClient() {
             {f.msg && <div className={f.state === "saved" ? "ok" : "err"} role="status">{f.msg}</div>}
             <div className="acts">
               <button className="btn" onClick={() => save(f)} disabled={f.state === "saving" || f.state === "saved"}>{f.state === "saved" ? "Saved" : "Save family"}</button>
+              {f.familyId && <Link className="btn ghost" href={`/admin/households/${f.familyId}`}>Open saved household</Link>}
               <button className="btn ghost" onClick={() => setFams((p) => p.filter((x) => x.key !== f.key))}>Remove from this page</button>
             </div>
           </div>

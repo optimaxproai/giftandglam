@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Ornament } from "../Ornament";
+import ItemListEditor, { cleanListItems } from "./ItemListEditor";
+import SizeField from "./SizeField";
+import GiftCardEditor from "./GiftCardEditor";
+import { cleanGiftCards, type GiftCard } from "@/lib/giftCards";
 
 export type EditChild = {
   id: string;
@@ -16,8 +20,7 @@ export type EditChild = {
   needs: string[];
   faves: string[];
   favColor: string;
-  giftStore: string;
-  giftAmount: number | null;
+  giftCards: GiftCard[];
   photo: boolean;
   photoPublic: boolean;
   approved: boolean;
@@ -30,11 +33,9 @@ async function post(body: unknown): Promise<string | null> {
   if (res.ok) return null;
   return (await res.json().catch(() => ({}))).error || "Couldn't save";
 }
-const lines = (t: string) => t.split("\n").map((s) => s.trim()).filter(Boolean);
-
 export default function ChildEditor({ child, family }: { child: EditChild; family: EditFamily }) {
   const router = useRouter();
-  const [c, setC] = useState({ ...child, wants: child.wants.join("\n"), needs: child.needs.join("\n"), faves: child.faves.join(", ") });
+  const [c, setC] = useState(child);
   const [f, setF] = useState(family);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -49,17 +50,16 @@ export default function ChildEditor({ child, family }: { child: EditChild; famil
       id: child.id,
       patch: {
         full_name: c.fullName,
-        age: c.age == null || (c.age as unknown) === "" ? null : Number(c.age),
+        age: c.age === child.age ? undefined : c.age,
         gender: c.gender || null,
         tops: c.tops || null,
         bottoms: c.bottoms || null,
         shoes: c.shoes || null,
-        wants: lines(c.wants),
-        needs: lines(c.needs),
-        faves: c.faves.split(",").map((s) => s.trim()).filter(Boolean),
+        wants: cleanListItems(c.wants),
+        needs: cleanListItems(c.needs),
+        faves: cleanListItems(c.faves),
         fav_color: c.favColor || null,
-        gift_store: c.giftStore || null,
-        gift_amount: c.giftStore ? Number(c.giftAmount) || 25 : null,
+        gift_cards: cleanGiftCards(c.giftCards),
         organizer_notes: c.notes || null,
       },
       family: { parent_name: f.parentName, phone: f.phone || null, email: f.email || null, story: f.story || null },
@@ -101,31 +101,30 @@ export default function ChildEditor({ child, family }: { child: EditChild; famil
           </div>
         </div>
         <p className="muted" style={{ fontSize: ".85rem", marginBottom: 10 }}>Photos are only ever shown to organizers. Decisions and publishing are on the household page.</p>
-        <div className="three">
+        <div className="three aligned-fields">
           <div className="field"><label className="lbl" htmlFor="fn">Full name (private)</label><input id="fn" value={c.fullName} onChange={(e) => set({ fullName: e.target.value })} /></div>
           <div className="field"><label className="lbl" htmlFor="ag">Age</label><input id="ag" type="number" min={0} max={21} value={c.age ?? ""} onChange={(e) => set({ age: e.target.value === "" ? null : Number(e.target.value) })} /></div>
           <div className="field"><label className="lbl" htmlFor="gd">Gender</label><select id="gd" value={c.gender || ""} onChange={(e) => set({ gender: e.target.value })}><option value="">Not stated</option><option>Girl</option><option>Boy</option><option>Other</option></select></div>
         </div>
-        <div className="three">
-          <div className="field"><label className="lbl" htmlFor="tp">Shirt</label><input id="tp" value={c.tops} onChange={(e) => set({ tops: e.target.value })} /></div>
-          <div className="field"><label className="lbl" htmlFor="bt">Pants</label><input id="bt" value={c.bottoms} onChange={(e) => set({ bottoms: e.target.value })} /></div>
-          <div className="field"><label className="lbl" htmlFor="sh">Shoes</label><input id="sh" value={c.shoes} onChange={(e) => set({ shoes: e.target.value })} /></div>
+        <div className="three aligned-fields">
+          <SizeField kind="shirt" value={c.tops} onChange={(tops) => set({ tops })} />
+          <SizeField kind="pants" value={c.bottoms} onChange={(bottoms) => set({ bottoms })} />
+          <SizeField kind="shoes" value={c.shoes} onChange={(shoes) => set({ shoes })} />
         </div>
         <div className="two">
-          <div className="field"><label className="lbl" htmlFor="wn">Wants (one per line)</label><textarea id="wn" value={c.wants} onChange={(e) => set({ wants: e.target.value })} /></div>
-          <div className="field"><label className="lbl" htmlFor="nd">Needs (one per line)</label><textarea id="nd" value={c.needs} onChange={(e) => set({ needs: e.target.value })} /></div>
+          <ItemListEditor kind="wants" items={c.wants} onChange={(wants) => set({ wants })} disabled={busy} />
+          <ItemListEditor kind="needs" items={c.needs} onChange={(needs) => set({ needs })} disabled={busy} />
         </div>
-        <div className="three">
-          <div className="field"><label className="lbl" htmlFor="fv">Favorites (max 3)</label><input id="fv" value={c.faves} onChange={(e) => set({ faves: e.target.value })} /></div>
-          <div className="field"><label className="lbl" htmlFor="gs">Gift card store</label><input id="gs" value={c.giftStore} onChange={(e) => set({ giftStore: e.target.value })} /></div>
-          <div className="field"><label className="lbl" htmlFor="ga">Gift card ($)</label><input id="ga" type="number" min={5} max={200} value={c.giftAmount ?? 25} onChange={(e) => set({ giftAmount: Number(e.target.value) })} /></div>
+        <div className="two">
+          <ItemListEditor kind="interests" items={c.faves} onChange={(faves) => set({ faves })} disabled={busy} />
+          <GiftCardEditor cards={c.giftCards} onChange={(giftCards) => set({ giftCards })} disabled={busy} />
         </div>
         <div className="field"><label className="lbl" htmlFor="fc">Favorite color</label><input id="fc" value={c.favColor} onChange={(e) => set({ favColor: e.target.value })} /></div>
       </div>
 
       <div className="panel private">
         <h3 style={{ marginBottom: 10 }}>Parent or guardian</h3>
-        <div className="three">
+        <div className="three aligned-fields">
           <div className="field"><label className="lbl" htmlFor="pn">Name</label><input id="pn" value={f.parentName} onChange={(e) => setF({ ...f, parentName: e.target.value })} /></div>
           <div className="field"><label className="lbl" htmlFor="pp">Phone</label><input id="pp" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
           <div className="field"><label className="lbl" htmlFor="pe">Email</label><input id="pe" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /></div>

@@ -19,7 +19,8 @@ export default function StatusButtons({ id, status, gift, compact = false }: { i
       <div className="acts">
         {(status === "claimed" || status === "purchased") && <button className="btn sm green" onClick={() => post({ action: "status", id, status: "returned" })}>Check in gifts</button>}
         {status === "returned" && <button className="btn sm green" onClick={() => post({ action: "status", id, status: "given" })}>Mark given out</button>}
-        {gift === "pledged" && <button className="btn sm ghost" onClick={() => post({ action: "gift", id, value: "received" })}>Card received</button>}
+        {gift === "pledged" && <button className="btn sm ghost" onClick={() => post({ action: "gift", id, value: "received" })}>Gift cards received</button>}
+        {!compact && gift !== "none" && <button className="btn sm ghost" onClick={() => { if (window.confirm("Clear the recorded gift card pledge or receipt?")) post({ action: "gift", id, value: "none" }); }}>Clear gift card status</button>}
         {!compact &&
           STATUS_ORDER.filter((s) => s !== status).map((s) => (
             <button key={s} className="btn sm ghost" onClick={() => post({ action: "status", id, status: s })}>Set: {STATUS_LABEL[s]}</button>

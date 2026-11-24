@@ -5,12 +5,15 @@ import { allChildren } from "@/lib/data";
 import { DRIVE, daysUntil } from "@/lib/drive";
 import { pad } from "@/lib/child";
 import { STATUS_LABEL } from "@/lib/types";
+import SponsorContacts from "@/components/admin/SponsorContacts";
+import { getCampaign } from "@/lib/campaign";
 
 export const dynamic = "force-dynamic";
 
 export default async function Sponsors() {
   await requireAdmin();
   const rows = (await allChildren()).filter((c) => c.sponsor).sort((a, b) => a.no - b.no);
+  const contacts = await (await getCampaign()).store.listSponsorContacts();
   const dl = daysUntil(DRIVE.returnBy);
 
   return (
@@ -18,6 +21,8 @@ export default async function Sponsors() {
       <div className="page-h">
         <div><h2>Sponsors</h2><p className="muted">Contact details are visible to organizers only. {dl >= 0 ? `${dl} days to the ${DRIVE.returnByLabel} return deadline.` : `The ${DRIVE.returnByLabel} deadline has passed.`}</p></div>
       </div>
+      <SponsorContacts contacts={contacts} />
+      <h3 style={{ marginBottom: 10 }}>Angel sponsorships</h3>
       {rows.length === 0 ? (
         <div className="empty"><h3>No sponsors yet</h3><p>Sponsors appear here as soon as they adopt an angel.</p></div>
       ) : (

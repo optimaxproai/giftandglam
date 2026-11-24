@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { DRIVE } from "@/lib/drive";
+import type { GiftCard } from "@/lib/giftCards";
 
-export default function ClaimForm({ childId, name, gift }: { childId: string; name: string; gift: { store: string; amount: number } | null }) {
+export default function ClaimForm({ childId, name, gifts }: { childId: string; name: string; gifts: GiftCard[] }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [token, setToken] = useState("");
@@ -51,8 +52,8 @@ export default function ClaimForm({ childId, name, gift }: { childId: string; na
       <div className="field"><label htmlFor="cl-email">Email</label><input id="cl-email" name="email" type="email" autoComplete="email" required /><small>Used for drop-off instructions and reminders. Never shown to other sponsors.</small></div>
       <div className="field"><label htmlFor="cl-phone">Phone (optional)</label><input id="cl-phone" name="phone" type="tel" autoComplete="tel" /></div>
       <input name="website" tabIndex={-1} autoComplete="off" style={{ position: "absolute", left: "-9999px" }} aria-hidden="true" />
-      {gift && (
-        <label className="check"><input type="checkbox" name="gift" /><span>I will also cover the ${gift.amount} {gift.store} gift card extra.</span></label>
+      {gifts.length > 0 && (
+        <label className="check"><input type="checkbox" name="gift" /><span>I will also purchase the optional gift cards listed above (total ${gifts.reduce((sum, gift) => sum + gift.amount, 0)}).</span></label>
       )}
       <label className="check"><input type="checkbox" required /><span>I will return the gifts unwrapped by {DRIVE.returnByLabel}.</span></label>
       {err && <div className="err" role="alert">{err}</div>}

@@ -3,6 +3,7 @@ import { CampaignError, type CampaignStore, type NewKid } from "./store";
 import { canApprove, ageFlag, entryDecision, householdState, reevaluate, type HouseholdState } from "./rules";
 import { customStock, stockById, type LabelStockSetting } from "../print";
 import type { ChildRow, Decision, FamilyRow } from "../types";
+import { giftCardFields, type GiftCard } from "../giftCards";
 
 export type KidInput = {
   fullName: string;
@@ -18,6 +19,7 @@ export type KidInput = {
   favColor?: string;
   giftStore?: string;
   giftAmount?: number;
+  giftCards?: GiftCard[];
   notes?: string;
 };
 export type HouseholdInput = { parentName: string; phone?: string; email?: string; story?: string; source?: string; kids: KidInput[] };
@@ -72,8 +74,7 @@ export function createCampaign(store: CampaignStore) {
         needs: k.needs.map(clean).filter(Boolean),
         faves: k.faves.map(clean).filter(Boolean).slice(0, 3),
         fav_color: clean(k.favColor) || null,
-        gift_store: clean(k.giftStore) || null,
-        gift_amount: clean(k.giftStore) ? k.giftAmount ?? 25 : null,
+        ...giftCardFields(k.giftCards ?? (clean(k.giftStore) ? [{ store: clean(k.giftStore), amount: k.giftAmount ?? 25 }] : [])),
         decision: e.decision,
         decision_reason: e.reason,
         set_aside_code: e.code,
@@ -90,6 +91,8 @@ export function createCampaign(store: CampaignStore) {
     }
     return {
       familyId: made.familyId,
+      parentName: existing[0]?.family?.parent_name ?? parentName,
+      childCount: existing.length + kids.length,
       merged: !!existingFamilyId,
       skipped,
       children: kids.map((k, i) => ({ id: made.childIds[i], name: k.full_name, decision: k.decision, reason: k.decision_reason })),
