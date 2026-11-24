@@ -19,6 +19,14 @@ const Kid = z.object({
   notes: z.string().max(1000).optional(),
 });
 const id = z.string().uuid();
+const CustomLabelLayout = z.object({
+  pageWidth: z.number(), pageHeight: z.number(),
+  width: z.number(), height: z.number(),
+  perPage: z.number(), columns: z.number(),
+  left: z.number(), top: z.number(),
+  gapX: z.number(), gapY: z.number(),
+  cutGuides: z.boolean(),
+});
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("enter"), parentName: z.string().max(160), phone: z.string().max(40).optional(), email: z.string().max(200).optional(), story: z.string().max(2000).optional(), source: z.string().max(200).optional(), kids: z.array(Kid).min(1).max(12) }),
   z.object({ action: z.literal("decide"), childId: id, decision: z.enum(["pending", "approved", "needs_info", "declined", "set_aside"]), reason: z.string().max(1000).optional() }),
@@ -29,7 +37,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("publish_all"), familyId: id.optional() }),
   z.object({ action: z.literal("update_household"), familyId: id, parentName: z.string().max(160).optional(), phone: z.string().max(40).optional(), email: z.string().max(200).optional(), story: z.string().max(2000).optional() }),
   z.object({ action: z.literal("save_max_age"), maxAge: z.number().int() }),
-  z.object({ action: z.literal("save_label_stock"), stock: z.string().max(40).nullable() }),
+  z.object({ action: z.literal("save_label_stock"), stock: z.union([z.string().max(40), CustomLabelLayout]).nullable() }),
   z.object({ action: z.literal("reset_review") }),
 ]);
 

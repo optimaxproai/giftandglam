@@ -186,8 +186,11 @@ tr:last-child td { border-bottom: 0; }
 .childbox { border: 2px solid var(--line); border-radius: 18px; background: #fff; padding: 16px; margin-bottom: 14px; }
 .childbox > h3 { color: var(--pine); margin-bottom: 10px; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
 
-/* ---- batch printing (US Letter) ---- */
+/* ---- batch printing ---- */
 .preview { zoom: .62; display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+@media screen {
+  .custom-preview { overflow-x: auto; padding: 10px; margin: -10px; }
+}
 .sheet { width: 8.5in; height: 11in; position: relative; background: #fff; box-shadow: 0 2px 14px rgba(0, 0, 0, .22); overflow: hidden; color: #000; flex: none; }
 .lab { position: absolute; box-sizing: border-box; padding: .08in .14in; display: flex; flex-direction: column; justify-content: center; overflow: hidden; line-height: 1.15; }
 .lab.cut { border: 1px dashed #9aa5a1; }

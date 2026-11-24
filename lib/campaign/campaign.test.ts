@@ -4,7 +4,7 @@ import { createMemoryStore } from "./store";
 import { seedCampaignReview } from "./seed";
 import { ageFlag, entryDecision, householdState } from "./rules";
 import { publicTree, toPublic } from "../child";
-import { CARDSTOCK, STOCKS, defaultStock, labelData, lastName, paginate } from "../print";
+import { CARDSTOCK, DEFAULT_CUSTOM_LAYOUT, STOCKS, customStock, defaultStock, labelData, lastName, paginate } from "../print";
 
 const kid = (fullName: string, age: number | null, extra: Record<string, unknown> = {}) => ({ fullName, age, gender: "Girl" as const, wants: ["Bike"], needs: ["Coat"], faves: [], ...extra });
 const fresh = () => {
@@ -210,5 +210,32 @@ describe("batch print layouts", () => {
       }
     }
     expect(CARDSTOCK.cols * CARDSTOCK.rows).toBe(10);
+  });
+  it("uses the custom paper dimensions and number of slots even with a partial row", () => {
+    const layout = { ...DEFAULT_CUSTOM_LAYOUT, pageWidth: 7, pageHeight: 5, width: 2, height: 1, columns: 3, perPage: 5, gapX: 0.25, gapY: 0.5 };
+    const stock = defaultStock(layout);
+    expect(stock).toMatchObject({ id: "custom", page: { width: 7, height: 5 } });
+    const pages = paginate(Array.from({ length: 11 }, (_, i) => i), stock);
+    expect(pages.map((page) => page.length)).toEqual([5, 5, 1]);
+    expect(pages[0][4]).toEqual({ item: 4, left: 2.5, top: 1.75 });
+    expect(pages[1][0]).toEqual({ item: 5, left: 0.25, top: 0.25 });
+  });
+  it("validates the measurements and the finished grid", () => {
+    expect(customStock({ ...DEFAULT_CUSTOM_LAYOUT, height: 0 }).error).toMatch(/positive widths and heights/);
+    expect(customStock({ ...DEFAULT_CUSTOM_LAYOUT, perPage: 4.5 }).error).toMatch(/whole numbers/);
+    expect(customStock({ ...DEFAULT_CUSTOM_LAYOUT, left: -0.25 }).error).toMatch(/positive number/);
+    expect(customStock({ ...DEFAULT_CUSTOM_LAYOUT, width: 4.5 }).error).toMatch(/do not fit/);
+    expect(customStock({ ...DEFAULT_CUSTOM_LAYOUT, perPage: 12 }).error).toMatch(/do not fit/);
+  });
+  it("saves a valid custom default and preserves it when an invalid layout is submitted", async () => {
+    const { c, store } = fresh();
+    const layout = { ...DEFAULT_CUSTOM_LAYOUT, pageWidth: 6, pageHeight: 4, width: 2.5, height: 1, perPage: 6 };
+    await c.saveLabelStock(layout);
+    await expect(c.saveLabelStock({ ...layout, pageHeight: 2 })).rejects.toThrow(/do not fit/);
+    expect((await store.getSettings()).labelStock).toEqual(layout);
+    await c.saveLabelStock("avery5163");
+    expect(defaultStock((await store.getSettings()).labelStock).id).toBe("avery5163");
+    await c.saveLabelStock(null);
+    expect(defaultStock((await store.getSettings()).labelStock).id).toBe("cardstock");
   });
 });

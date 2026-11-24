@@ -1,7 +1,7 @@
 import { firstName, normEmail, normPhone, sameChild } from "../families";
 import { CampaignError, type CampaignStore, type NewKid } from "./store";
 import { canApprove, ageFlag, entryDecision, householdState, reevaluate, type HouseholdState } from "./rules";
-import { stockById } from "../print";
+import { customStock, stockById, type LabelStockSetting } from "../print";
 import type { ChildRow, Decision, FamilyRow } from "../types";
 
 export type KidInput = {
@@ -172,9 +172,14 @@ export function createCampaign(store: CampaignStore) {
     return { moved: moves.length };
   }
 
-  async function saveLabelStock(id: string | null) {
-    if (id !== null && (!stockById(id) || id === "cardstock")) throw new CampaignError("Choose one of the listed label sheets.");
-    await store.saveSettings({ labelStock: id });
+  async function saveLabelStock(setting: LabelStockSetting) {
+    if (setting && typeof setting === "object") {
+      const { error } = customStock(setting);
+      if (error) throw new CampaignError(error);
+    } else if (setting !== null && (!stockById(setting) || setting === "cardstock")) {
+      throw new CampaignError("Choose one of the listed label sheets.");
+    }
+    await store.saveSettings({ labelStock: setting });
   }
 
   async function households(): Promise<Household[]> {

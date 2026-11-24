@@ -1,4 +1,25 @@
-export type Stock = { id: string; name: string; cols: number; rows: number; w: number; h: number; left: number; top: number; gapX: number; gapY: number; cutGuides: boolean };
+export type Stock = {
+  id: string; name: string; cols: number; rows: number; w: number; h: number;
+  left: number; top: number; gapX: number; gapY: number; cutGuides: boolean;
+  page?: { width: number; height: number };
+  perPage?: number;
+};
+
+export type CustomLabelLayout = {
+  pageWidth: number;
+  pageHeight: number;
+  width: number;
+  height: number;
+  perPage: number;
+  columns: number;
+  left: number;
+  top: number;
+  gapX: number;
+  gapY: number;
+  cutGuides: boolean;
+};
+
+export type LabelStockSetting = string | CustomLabelLayout | null;
 
 /** Inches, US Letter. Avery figures are the published template measurements for each stock. */
 export const STOCKS: Stock[] = [
@@ -11,16 +32,56 @@ export const STOCKS: Stock[] = [
 export const CARDSTOCK = STOCKS[0];
 export const stockById = (id: string | null | undefined): Stock | null => STOCKS.find((s) => s.id === id) ?? null;
 
+export const DEFAULT_CUSTOM_LAYOUT: CustomLabelLayout = {
+  pageWidth: 8.5, pageHeight: 11,
+  width: CARDSTOCK.w, height: CARDSTOCK.h,
+  perPage: CARDSTOCK.cols * CARDSTOCK.rows, columns: CARDSTOCK.cols,
+  left: CARDSTOCK.left, top: CARDSTOCK.top,
+  gapX: CARDSTOCK.gapX, gapY: CARDSTOCK.gapY,
+  cutGuides: CARDSTOCK.cutGuides,
+};
+
+export function customStock(layout: CustomLabelLayout): { stock: Stock; error?: never } | { stock?: never; error: string } {
+  const { pageWidth, pageHeight, width, height, perPage, columns, left, top, gapX, gapY, cutGuides } = layout;
+  if (![pageWidth, pageHeight, width, height].every((value) => Number.isFinite(value) && value > 0)) {
+    return { error: "Enter positive widths and heights for the paper and label." };
+  }
+  if (![perPage, columns].every((value) => Number.isSafeInteger(value) && value > 0)) {
+    return { error: "Enter positive whole numbers for labels per page and per row." };
+  }
+  if (![left, top, gapX, gapY].every((value) => Number.isFinite(value) && value >= 0)) {
+    return { error: "Enter zero or a positive number for each margin and gap." };
+  }
+
+  const cols = Math.min(columns, perPage);
+  const rows = Math.ceil(perPage / cols);
+  const right = left + cols * width + (cols - 1) * gapX;
+  const bottom = top + rows * height + (rows - 1) * gapY;
+  const tolerance = 1e-9;
+  if (right > pageWidth + tolerance || bottom > pageHeight + tolerance) {
+    return { error: "The labels do not fit this page. Adjust the paper size, label dimensions, counts, margins, or spacing." };
+  }
+
+  return {
+    stock: {
+      id: "custom", name: `Custom layout (${perPage} per sheet)`, cols, rows,
+      w: width, h: height, left, top, gapX, gapY, cutGuides,
+      page: { width: pageWidth, height: pageHeight }, perPage,
+    },
+  };
+}
+
 /** Cardstock until the organizer saves a label stock; then that label sheet. */
-export function defaultStock(saved: string | null): Stock {
+export function defaultStock(saved: LabelStockSetting): Stock {
+  if (saved && typeof saved === "object") return customStock(saved).stock ?? CARDSTOCK;
   return stockById(saved) ?? CARDSTOCK;
 }
 
 export type Placed<T> = { item: T; left: number; top: number };
 
-/** Splits items into Letter pages and gives each its position in inches. */
+/** Splits items into pages and gives each its position in inches. */
 export function paginate<T>(items: T[], s: Stock): Placed<T>[][] {
-  const per = s.cols * s.rows;
+  const per = s.perPage ?? s.cols * s.rows;
   const pages: Placed<T>[][] = [];
   for (let i = 0; i < items.length; i += per) {
     pages.push(
