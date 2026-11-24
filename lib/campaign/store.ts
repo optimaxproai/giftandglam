@@ -4,13 +4,14 @@ import { normEmail, normPhone } from "../families";
 import type { LabelStockSetting } from "../print";
 import { DEFAULT_MAX_AGE } from "./rules";
 import type { ChildRow, FamilyRow, SponsorRow } from "../types";
+import { CONTACT_COLUMNS, type SponsorContact, type SponsorContactInput, type SponsorFlyer } from "../sponsorContacts";
 
 export type Settings = { maxAge: number; maxAgeConfirmed: boolean; labelStock: LabelStockSetting };
 
 export type NewFamily = { parent_name: string; phone: string | null; email: string | null; story: string | null; source_label: string | null };
 export type NewKid = Pick<
   ChildRow,
-  "full_name" | "first_name" | "age" | "age_uncertain" | "gender" | "tops" | "bottoms" | "shoes" | "wants" | "needs" | "faves" | "fav_color" | "gift_store" | "gift_amount" | "decision" | "decision_reason" | "set_aside_code" | "organizer_notes"
+  "full_name" | "first_name" | "age" | "age_uncertain" | "gender" | "tops" | "bottoms" | "shoes" | "wants" | "needs" | "faves" | "fav_color" | "gift_store" | "gift_amount" | "gift_cards" | "decision" | "decision_reason" | "set_aside_code" | "organizer_notes"
 >;
 
 export class CampaignError extends Error {
@@ -28,6 +29,9 @@ export interface CampaignStore {
   patchFamily(id: string, patch: Partial<FamilyRow> & { phone_norm?: string | null; email_norm?: string | null }): Promise<void>;
   getSettings(): Promise<Settings>;
   saveSettings(p: Partial<Settings>): Promise<void>;
+  listSponsorContacts(): Promise<SponsorContact[]>;
+  saveSponsorContact(id: string | null, input: SponsorContactInput, flyer?: SponsorFlyer | null): Promise<void>;
+  sponsorFlyer(id: string): Promise<SponsorFlyer | null>;
   claim(a: { childId: string; name: string; email: string; phone: string | null; gift: boolean; sponsorToken: string | null }): Promise<string>;
   sponsorByToken(token: string): Promise<SponsorRow | null>;
   mineAction(a: { token: string; childId: string; action: "bought" | "release" }): Promise<boolean>;
@@ -37,10 +41,10 @@ const nowIso = () => new Date().toISOString();
 
 /* ------------------------------------------------------------------ memory */
 
-type MemState = { children: ChildRow[]; families: Map<string, FamilyRow & { phone_norm?: string | null; email_norm?: string | null }>; sponsors: Map<string, SponsorRow & { email_norm: string }>; settings: Settings; no: number; code: number };
+type MemState = { children: ChildRow[]; families: Map<string, FamilyRow & { phone_norm?: string | null; email_norm?: string | null }>; sponsors: Map<string, SponsorRow & { email_norm: string }>; sponsorContacts: Map<string, SponsorContact>; sponsorFlyers: Map<string, SponsorFlyer>; settings: Settings; no: number; code: number };
 
 export function emptyState(): MemState {
-  return { children: [], families: new Map(), sponsors: new Map(), settings: { maxAge: DEFAULT_MAX_AGE, maxAgeConfirmed: false, labelStock: null }, no: 0, code: 0 };
+  return { children: [], families: new Map(), sponsors: new Map(), sponsorContacts: new Map(), sponsorFlyers: new Map(), settings: { maxAge: DEFAULT_MAX_AGE, maxAgeConfirmed: false, labelStock: null }, no: 0, code: 0 };
 }
 
 /** In-memory store. Mirrors the database rules (angel codes, published-needs-approved, atomic claim). */
@@ -96,6 +100,20 @@ export function createMemoryStore(state: MemState = emptyState()): CampaignStore
     },
     async saveSettings(p) {
       Object.assign(state.settings, p);
+    },
+    async listSponsorContacts() {
+      return [...state.sponsorContacts.values()].map(clone).sort((a, b) => a.name.localeCompare(b.name));
+    },
+    async saveSponsorContact(id, input, flyer) {
+      if (id && !state.sponsorContacts.has(id)) throw new CampaignError("Sponsor not found.", "not_found");
+      const key = id ?? randomUUID();
+      const name = flyer === undefined ? state.sponsorContacts.get(key)?.flyer_name ?? null : flyer?.flyer_name ?? null;
+      state.sponsorContacts.set(key, clone({ id: key, ...input, flyer_name: name }));
+      if (flyer) state.sponsorFlyers.set(key, clone(flyer));
+      else if (flyer === null) state.sponsorFlyers.delete(key);
+    },
+    async sponsorFlyer(id) {
+      return clone(state.sponsorFlyers.get(id) ?? null);
     },
     async claim({ childId, name, email, phone, gift, sponsorToken }) {
       const norm = email.trim().toLowerCase();
@@ -194,6 +212,20 @@ export function createSupabaseStore(): CampaignStore {
       if (p.maxAge !== undefined) rows.push({ key: SETTINGS_KEYS.maxAge, value: { value: p.maxAge, confirmed: p.maxAgeConfirmed ?? true }, updated_at: nowIso() });
       if (p.labelStock !== undefined) rows.push({ key: SETTINGS_KEYS.labelStock, value: { value: p.labelStock }, updated_at: nowIso() });
       if (rows.length) ok(await db().from("drive_settings").upsert(rows));
+    },
+    async listSponsorContacts() {
+      return (ok(await db().from("sponsor_contacts").select(CONTACT_COLUMNS).order("name")) as unknown as SponsorContact[]) ?? [];
+    },
+    async saveSponsorContact(id, input, flyer) {
+      const patch = { ...input, ...(flyer === undefined ? {} : flyer ?? { flyer_name: null, flyer_type: null, flyer_data: null }) };
+      if (id) {
+        const rows = ok(await db().from("sponsor_contacts").update(patch).eq("id", id).select("id"));
+        if (!rows?.length) throw new CampaignError("Sponsor not found.", "not_found");
+      } else ok(await db().from("sponsor_contacts").insert(patch));
+    },
+    async sponsorFlyer(id) {
+      const row = ok(await db().from("sponsor_contacts").select("flyer_name,flyer_type,flyer_data").eq("id", id).maybeSingle()) as SponsorFlyer | null;
+      return row?.flyer_data ? row : null;
     },
     async claim({ childId, name, email, phone, gift, sponsorToken }) {
       const { data, error } = await db().rpc("claim_child", { p_child: childId, p_name: name, p_email: email, p_phone: phone, p_gift: gift, p_sponsor_token: sponsorToken });

@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -41,7 +42,7 @@ export default function HouseholdPanel({ family, kids, maxAge }: { family: PFami
     <div style={{ display: "grid", gap: 16 }}>
       <div className="panel private">
         <h3 style={{ marginBottom: 10 }}>Household</h3>
-        <div className="three">
+        <div className="three aligned-fields">
           <div className="field"><label className="lbl" htmlFor="fp">Parent or guardian</label><input id="fp" value={fam.parentName} onChange={(e) => setFam({ ...fam, parentName: e.target.value })} /></div>
           <div className="field"><label className="lbl" htmlFor="fph">Phone</label><input id="fph" value={fam.phone} onChange={(e) => setFam({ ...fam, phone: e.target.value })} /></div>
           <div className="field"><label className="lbl" htmlFor="fe">Email</label><input id="fe" value={fam.email} onChange={(e) => setFam({ ...fam, email: e.target.value })} /></div>
@@ -85,6 +86,7 @@ export default function HouseholdPanel({ family, kids, maxAge }: { family: PFami
               <input id={`why-${k.id}`} value={reason[k.id] || ""} onChange={(e) => setReason({ ...reason, [k.id]: e.target.value })} disabled={locked} />
             </div>
             <div className="acts">
+              <Link className="btn sm ghost" href={`/admin/children/${k.id}`}>Edit child details</Link>
               <button className="btn sm green" disabled={busy || k.decision === "approved"} onClick={() => run({ action: "decide", childId: k.id, decision: "approved" }, "Approved. Not on the tree until you publish.", k.id)}>Approve</button>
               <button className="btn sm ghost" disabled={busy || locked} onClick={() => run({ action: "decide", childId: k.id, decision: "needs_info", reason: reason[k.id] }, "Marked as needing more information.", k.id)}>Request more information</button>
               <button className="btn sm ghost" disabled={busy || locked} onClick={() => run({ action: "decide", childId: k.id, decision: "declined", reason: reason[k.id] }, "Declined. It stays on record.", k.id)}>Decline</button>

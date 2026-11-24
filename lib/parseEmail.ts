@@ -36,12 +36,16 @@ export async function parseRequests(input: ParseInput): Promise<DraftFamily[]> {
     max_tokens: 8000,
     system: SYSTEM,
     tools: [PARSE_TOOL],
-    tool_choice: { type: "tool", name: PARSE_TOOL.name },
+    tool_choice: { type: "auto" },
     messages: [{ role: "user", content }],
   });
-  const block = res.content.find((b) => b.type === "tool_use");
-  if (!block || block.type !== "tool_use") throw new Error("The reader returned nothing usable");
-  const parsed = ParsedSchema.safeParse(block.input);
-  if (!parsed.success) throw new Error("The reader's answer had an unexpected shape");
-  return normalizeParsed(parsed.data);
+  const families: DraftFamily[] = [];
+  for (const block of res.content) {
+    if (block.type !== "tool_use" || block.name !== PARSE_TOOL.name) continue;
+    const parsed = ParsedSchema.safeParse(block.input);
+    if (!parsed.success) throw new Error("The reader returned an incomplete result. Try again or enter the household manually.");
+    families.push(...normalizeParsed(parsed.data));
+  }
+  if (!families.length) throw new Error("No family requests could be read. Try a clearer copy or enter the household manually.");
+  return families;
 }

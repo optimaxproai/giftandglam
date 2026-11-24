@@ -76,7 +76,7 @@ export default function TreeBrowser({ kids }: { kids: PublicChild[] }) {
                 ))}
               </ul>
               <div className="chips">
-                {c.gift && <span className="chip gc">+ ${c.gift.amount} {c.gift.store} gift card</span>}
+                {c.gifts.map((gift, index) => <span key={index} className="chip gc">+ ${gift.amount} {gift.store} gift card</span>)}
                 {c.siblings.length > 0 && <span className="chip sib">+{c.siblings.length} sibling{c.siblings.length > 1 ? "s" : ""}</span>}
               </div>
             </Link>

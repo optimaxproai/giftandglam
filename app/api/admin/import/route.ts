@@ -5,6 +5,7 @@ import { getCampaign } from "@/lib/campaign";
 import { CampaignError } from "@/lib/campaign/store";
 import { demoMode } from "@/lib/demo";
 import { saveChildPhoto } from "@/lib/photos";
+import { GiftCardsSchema } from "@/lib/giftCards";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -20,6 +21,8 @@ const Child = z.object({
   favColor: z.string().trim().max(60),
   giftStore: z.string().trim().max(80),
   giftAmount: z.number().int().min(5).max(200),
+  giftCards: GiftCardsSchema.optional(),
+  notes: z.string().trim().max(1000).optional(),
   photo: z.string().max(2_200_000).nullable(),
 });
 const Body = z.object({
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
   try {
     const campaign = await getCampaign();
     const r = await campaign.enterHousehold(
-      { parentName: family.parentName, phone: family.phone, email: family.email, story: family.story, source: family.source, kids: children.map((c) => ({ fullName: c.fullName, age: c.age, gender: c.gender, tops: c.tops, bottoms: c.bottoms, shoes: c.shoes, wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.favColor, giftStore: c.giftStore, giftAmount: c.giftAmount })) },
+      { parentName: family.parentName, phone: family.phone, email: family.email, story: family.story, source: family.source, kids: children.map((c) => ({ fullName: c.fullName, age: c.age, gender: c.gender, tops: c.tops, bottoms: c.bottoms, shoes: c.shoes, wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.favColor, giftStore: c.giftStore, giftAmount: c.giftAmount, giftCards: c.giftCards, notes: c.notes })) },
       admin.email,
     );
     if (!demoMode()) {

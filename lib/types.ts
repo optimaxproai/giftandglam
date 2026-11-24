@@ -1,3 +1,5 @@
+import type { GiftCard } from "./giftCards";
+
 export type Status = "available" | "claimed" | "purchased" | "returned" | "given";
 export type GiftStatus = "none" | "pledged" | "received";
 export type Decision = "pending" | "approved" | "needs_info" | "declined" | "set_aside";
@@ -31,6 +33,7 @@ export type ChildRow = {
   fav_color: string | null;
   gift_store: string | null;
   gift_amount: number | null;
+  gift_cards?: GiftCard[] | null;
   gift_card_status: GiftStatus;
   photo_path: string | null;
   photo_public: boolean;
@@ -67,6 +70,7 @@ export type PublicChild = {
   faves: string[];
   favColor: string | null;
   gift: { store: string; amount: number } | null;
+  gifts: GiftCard[];
   available: boolean;
   status: Status;
   hasPhoto: boolean;

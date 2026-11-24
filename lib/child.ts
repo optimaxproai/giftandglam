@@ -1,4 +1,5 @@
 import type { ChildRow, PublicChild } from "./types";
+import { readGiftCards } from "./giftCards";
 
 /** Children on the public tree: published (`approved`) AND decided "approved" AND holding an angel code. */
 export const onTree = (c: ChildRow) => c.approved && c.decision === "approved" && !!c.angel_code;
@@ -10,6 +11,7 @@ export const onTree = (c: ChildRow) => c.approved && c.decision === "approved" &
  */
 export function toPublic(c: ChildRow, all: ChildRow[]): PublicChild {
   const code = c.angel_code || "";
+  const gifts = readGiftCards(c);
   const siblings = all
     .filter((s) => s.family_id === c.family_id && s.id !== c.id && onTree(s))
     .map((s) => ({ id: s.id, firstName: s.angel_code || "", age: s.age, available: s.status === "available" }));
@@ -27,7 +29,8 @@ export function toPublic(c: ChildRow, all: ChildRow[]): PublicChild {
     needs: c.needs,
     faves: c.faves,
     favColor: c.fav_color,
-    gift: c.gift_store && c.gift_amount ? { store: c.gift_store, amount: c.gift_amount } : null,
+    gift: gifts[0] ?? null,
+    gifts,
     available: c.status === "available",
     status: c.status,
     hasPhoto: false, // photos stay with organizers

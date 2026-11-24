@@ -4,6 +4,7 @@ import { createMemoryStore } from "./store";
 import { seedCampaignReview } from "./seed";
 import { ageFlag, entryDecision, householdState } from "./rules";
 import { publicTree, toPublic } from "../child";
+import { readGiftCards } from "../giftCards";
 import { CARDSTOCK, DEFAULT_CUSTOM_LAYOUT, STOCKS, customStock, defaultStock, labelData, lastName, paginate } from "../print";
 
 const kid = (fullName: string, age: number | null, extra: Record<string, unknown> = {}) => ({ fullName, age, gender: "Girl" as const, wants: ["Bike"], needs: ["Coat"], faves: [], ...extra });
@@ -166,6 +167,36 @@ describe("what the public can see", () => {
 });
 
 describe("sponsorship and gift receipt", () => {
+  it("saves multiple gift cards, preserves the old single-card format, and calculates the full public list", async () => {
+    const { c, store } = fresh();
+    const cards = [{ store: "Target", amount: 20 }, { store: "Bookshop", amount: 30 }];
+    expect(readGiftCards({ gift_store: "Target", gift_amount: 20 })).toEqual([cards[0]]);
+    const r = await c.enterHousehold({ parentName: "Fictional Parent", kids: [kid("Child Example", 8, { giftCards: cards, notes: "Sizing note" })] });
+    expect(r.childCount).toBe(1);
+    const child = (await store.list()).find((row) => row.id === r.children[0].id)!;
+    expect(child.gift_store).toBe("Target");
+    expect(child.organizer_notes).toBe("Sizing note");
+    expect(toPublic(child, [child]).gifts).toEqual(cards);
+    expect(toPublic(child, [child])).not.toHaveProperty("organizer_notes");
+  });
+  it("maintains sponsor contacts independently of sponsor claims and keeps flyer data out of the list", async () => {
+    const { c, store } = fresh();
+    const input = { name: "Sponsor Example", organization: "Example Shop", email: "sponsor@example.com", phone: "", links: ["https://example.com"], notes: "Follow up" };
+    const flyer = { flyer_name: "example.pdf", flyer_type: "application/pdf", flyer_data: "ZmljdGlvbmFs" };
+    await store.saveSponsorContact(null, input, flyer);
+    const [contact] = await store.listSponsorContacts();
+    expect(contact.flyer_name).toBe("example.pdf");
+    expect(contact).not.toHaveProperty("flyer_data");
+    expect(await store.sponsorFlyer(contact.id)).toEqual(flyer);
+    await store.saveSponsorContact(contact.id, { ...input, notes: "Updated" });
+    expect(await store.sponsorFlyer(contact.id)).toEqual(flyer);
+    const r = await c.enterHousehold({ parentName: "Family Example", kids: [kid("Child Example", 8)] });
+    await c.decide(r.children[0].id, "approved");
+    await c.publish(r.children[0].id);
+    expect(await store.claim({ childId: r.children[0].id, name: input.name, email: input.email, phone: null, gift: false, sponsorToken: null })).toBeTruthy();
+    await store.saveSponsorContact(contact.id, input, null);
+    expect(await store.sponsorFlyer(contact.id)).toBeNull();
+  });
   it("claims once, rejects a second claim, ties a sponsor to their own session, and shows receipt", async () => {
     const { c, store } = fresh();
     const r = await c.enterHousehold({ parentName: "Pat", phone: "555-0100", kids: [kid("A", 8, { giftStore: "Target" }), kid("B", 9)] });

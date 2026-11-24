@@ -44,12 +44,12 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
             {c.bottoms && <div className="fact"><small>Pants</small>{c.bottoms}</div>}
             {c.shoes && <div className="fact"><small>Shoes</small>{c.shoes}</div>}
             {c.favColor && <div className="fact"><small>Favorite color</small>{c.favColor}</div>}
-            {c.gift && <div className="fact"><small>Gift card extra</small>${c.gift.amount} {c.gift.store}</div>}
           </div>
           <div className="two">
             <List title="Wants" items={c.wants} />
             <List title="Needs" items={c.needs} />
           </div>
+          {c.gifts.length > 0 && <List title="Optional gift cards" items={c.gifts.map((gift) => `$${gift.amount} ${gift.store}`)} />}
           {c.faves.length > 0 && <div className="chips">{c.faves.map((f) => <span key={f} className="chip">{f}</span>)}</div>}
           {c.siblings.length > 0 && (
             <div>
@@ -73,7 +73,7 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
               <div className="ribbon" />
               <h3 style={{ marginBottom: 6 }}>Adopt {c.firstName}</h3>
               <p className="muted" style={{ marginBottom: 14, fontSize: ".88rem" }}>Return the gifts unwrapped by {DRIVE.returnByLabel}. The giveaway is {DRIVE.giveawayLabel}.</p>
-              <ClaimForm childId={c.id} name={c.firstName} gift={c.gift} />
+              <ClaimForm childId={c.id} name={c.firstName} gifts={c.gifts} />
             </>
           ) : (
             <>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { readGiftCards } from "@/lib/giftCards";
 import { SiteShell } from "@/components/Festive";
 import { Ornament } from "@/components/Ornament";
 import StatusButtons from "@/components/admin/StatusButtons";
@@ -54,7 +55,7 @@ export default async function Children({ searchParams }: { searchParams: { filte
                   <td><span className={`pill ${DECISION_PILL[c.decision]}`}>{DECISION_LABEL[c.decision]}</span>{c.approved && <><br /><span className="pill available">On the tree</span></>}{c.decision_reason && <div className="muted" style={{ fontSize: ".78rem", maxWidth: 220 }}>{c.decision_reason}</div>}</td>
                   <td>{c.approved ? <><span className={`pill ${c.status}`}>{STATUS_LABEL[c.status]}</span><br /><span className="muted">{c.sponsor ? c.sponsor.name : "No sponsor yet"}</span></> : <span className="muted">Not on the tree</span>}</td>
                   <td>{c.status === "returned" || c.status === "given" ? <><span className="pill returned">Received</span><br /><span className="muted">{c.returned_at ? new Date(c.returned_at).toLocaleDateString() : ""}</span></> : c.approved && c.sponsor ? <span className="muted">Not yet</span> : <span className="muted">—</span>}</td>
-                  <td>{c.gift_store ? <>{c.gift_store} ${c.gift_amount}<br /><span className="muted">{c.gift_card_status === "none" ? "Not pledged" : c.gift_card_status}</span></> : <span className="muted">None asked</span>}</td>
+                  <td>{readGiftCards(c).length ? <>{readGiftCards(c).map((gift, i) => <div key={i}>{gift.store} ${gift.amount}</div>)}<span className="muted">{c.gift_card_status === "none" ? "Not pledged" : c.gift_card_status}</span></> : <span className="muted">None asked</span>}</td>
                   <td>{c.approved ? <StatusButtons id={c.id} status={c.status} gift={c.gift_card_status} compact /> : <Link className="btn sm ghost" href={`/admin/households/${c.family_id}`}>Decide</Link>}</td>
                 </tr>
               ))}

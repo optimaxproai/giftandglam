@@ -9,10 +9,10 @@ export const dynamic = "force-dynamic";
 export default async function PrintPage() {
   await requireAdmin();
   const c = await getCampaign();
-  const rows = (await c.store.list()).filter((x) => x.decision === "approved" && x.angel_code);
+  const rows = await c.store.list();
   const items: PrintItem[] = rows.map((x) => {
     const l = labelData(x);
-    return { id: x.id, code: l.code, family: l.family, gender: l.gender, age: l.age, published: x.approved, status: x.status };
+    return { id: x.id, code: l.code, family: l.family, gender: l.gender, age: l.age, published: x.approved, status: x.status, name: x.full_name, familyId: x.family_id, decision: x.decision };
   });
   const { labelStock } = await c.store.getSettings();
   return (
@@ -20,7 +20,7 @@ export default async function PrintPage() {
       <div className="page-h">
         <div>
           <h2>Print angel labels</h2>
-          <p className="muted" style={{ maxWidth: "62ch" }}>Organizer only. Labels show the angel code, parent&apos;s last name, gender and age. Cardstock is the default until you save a label stock.</p>
+          <p className="muted">Organizer only. All requests are listed. Approve a child to assign their angel code and enable printing. Labels show the code, parent&apos;s last name, gender and age.</p>
         </div>
       </div>
       <PrintClient items={items} savedStock={labelStock} />

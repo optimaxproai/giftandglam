@@ -81,6 +81,8 @@ export async function POST(req: Request) {
     const families = await parseRequests(parsed.data);
     return NextResponse.json({ families });
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : "Couldn't read that email" }, { status: 502 });
+    const message = e instanceof Error ? e.message : "";
+    const error = message.startsWith("No family requests") || message.startsWith("The reader returned") ? message : message === "ANTHROPIC_API_KEY is not set" ? "The email reader is not configured yet. You can enter the household manually." : "The email reader couldn't complete this request. Check the file or enter the household manually.";
+    return NextResponse.json({ error }, { status: 502 });
   }
 }

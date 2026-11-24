@@ -53,7 +53,7 @@ export default async function Mine({ params }: { params: { token: string } }) {
                   <div><b>Wants</b><ul className="list">{c.wants.map((w) => <li key={w}>{w}</li>)}</ul></div>
                   <div><b>Needs</b><ul className="list">{c.needs.map((w) => <li key={w}>{w}</li>)}</ul></div>
                 </div>
-                {c.gift && <div className="chips"><span className="chip gc">${c.gift.amount} {c.gift.store} gift card ({row.gift_card_status === "received" ? "received" : row.gift_card_status === "pledged" ? "pledged" : "optional"})</span></div>}
+                {c.gifts.length > 0 && <div><b>Gift cards ({row.gift_card_status === "received" ? "received" : row.gift_card_status === "pledged" ? "pledged" : "optional"})</b><ul className="list">{c.gifts.map((gift, index) => <li key={index}>${gift.amount} {gift.store}</li>)}</ul></div>}
                 {c.siblings.length > 0 && (
                   <p className="muted" style={{ fontSize: ".84rem", textAlign: "center" }}>
                     Siblings on the tree: {c.siblings.map((s) => <Link key={s.id} href={`/angel/${s.id}`}>{s.firstName}</Link>).reduce<React.ReactNode[]>((a, x, i) => (i ? [...a, ", ", x] : [x]), [])}

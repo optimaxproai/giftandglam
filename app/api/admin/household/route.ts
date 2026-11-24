@@ -4,6 +4,7 @@ import { adminUser } from "@/lib/auth";
 import { getCampaign, resetCampaignReview } from "@/lib/campaign";
 import { CampaignError } from "@/lib/campaign/store";
 import { reviewMode } from "@/lib/mode";
+import { GiftCardsSchema } from "@/lib/giftCards";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ const Kid = z.object({
   tops: z.string().max(60).optional(), bottoms: z.string().max(60).optional(), shoes: z.string().max(60).optional(),
   wants: lines, needs: lines, faves: lines.refine((a) => a.length <= 3, "At most 3 interests"),
   favColor: z.string().max(60).optional(), giftStore: z.string().max(80).optional(), giftAmount: z.number().int().min(5).max(200).optional(),
+  giftCards: GiftCardsSchema.optional(),
   notes: z.string().max(1000).optional(),
 });
 const id = z.string().uuid();
