@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { demoChildren, demoMode } from "../demo";
 import { reviewMode } from "../mode";
 import type { ChildRow } from "../types";
@@ -25,8 +26,14 @@ function demoRows() {
 
 function fresh(): Holder {
   if (reviewMode()) {
-    const campaign = createCampaign(createMemoryStore());
-    return { campaign, ready: seedCampaignReview(campaign) };
+    // Use the same fictional IDs across preview instances for the initial records.
+    // Records created after seeding still use random IDs.
+    let seedId = 0;
+    let seeding = true;
+    const campaign = createCampaign(createMemoryStore(emptyState(), () =>
+      seeding ? `a1200000-2026-4000-8000-${String(++seedId).padStart(12, "0")}` : randomUUID(),
+    ));
+    return { campaign, ready: seedCampaignReview(campaign).finally(() => { seeding = false; }) };
   }
   return { campaign: createCampaign(createMemoryStore(demoRows())), ready: Promise.resolve() };
 }

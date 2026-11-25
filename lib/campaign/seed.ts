@@ -6,12 +6,12 @@ const kid = (fullName: string, age: number | null, gender: "Girl" | "Boy" | "Oth
 
 /**
  * Fictional 2026 records for the review build. Every name, phone and email is made up.
- * Public tree: exactly ONE angel. Also: a household with only an over-age applicant,
+ * Public tree: five fictional angels for adoption testing. Also: a household with only an over-age applicant,
  * a household with an eligible sibling and an over-age sibling, and households with missing or uncertain ages.
  */
 export async function seedCampaignReview(c: Campaign) {
   const by = "review-build";
-  // 1. Approved. One child is published (the only angel on the tree); her brother is approved but not published yet.
+  // 1. Approved. One child is published; her brother is approved but not published yet.
   const a = await c.enterHousehold({ parentName: "Jordan Sample", phone: "555-0110", email: "jordan.sample@example.com", story: "Fictional review note: sample hardship text that only organizers can read.", source: "Fictional printed email", kids: [
     kid("Casey Sample", 8, "Girl", ["Art easel set", "LEGO Classic bricks", "Illustrated animal encyclopedia", "Light-up sneakers"], ["Winter coat", "Socks (6 pack)", "Pajamas"], { faves: ["Drawing", "Animals"], tops: "Youth M", coatSize: "Youth L", shoes: "1" }),
     kid("Drew Sample", 6, "Boy", ["Dinosaur set", "Hot Wheels track"], ["Rain boots", "Underwear"], { faves: ["Dinosaurs"] }),
@@ -33,4 +33,20 @@ export async function seedCampaignReview(c: Campaign) {
     kid("Harper Testfield", null, "Girl", ["Craft kit"], ["Socks"]),
     kid("Eli Testfield", 12, "Boy", ["Basketball"], ["Jeans"], { ageUnsure: true }),
   ] }, by);
+  const adoptionSamples = await c.enterHousehold({
+    parentName: "Fictional Adoption Samples",
+    email: "adoption-samples@example.invalid",
+    source: "Fictional adoption preview",
+    kids: [
+      kid("Fictional Alex", 5, "Boy", ["Building blocks"], ["Winter boots"], { tops: "Youth S", shoes: "12" }),
+      kid("Fictional Blake", 9, "Girl", ["Sketchbook and pencils"], ["Winter coat"], { tops: "Youth M", coatSize: "Youth L", faves: ["Drawing"] }),
+      kid("Fictional Cameron", 12, "Other", ["Board game"], ["Warm socks"], { faves: ["Puzzles"] }),
+      kid("Fictional Dana", 15, "Girl", ["Headphones"], ["Hoodie"], { tops: "Adult S", faves: ["Music"] }),
+    ],
+  }, by);
+  for (const child of adoptionSamples.children) {
+    await c.decide(child.id, "approved", { by });
+    await c.publish(child.id);
+  }
+
 }

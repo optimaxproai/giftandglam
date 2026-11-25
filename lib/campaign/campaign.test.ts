@@ -149,16 +149,16 @@ describe("what the public can see", () => {
     expect(p.siblings.map((s) => s.firstName)).toEqual(["G26-002"]);
   });
 
-  it("the review seed puts exactly one fictional angel on the tree and covers every case", async () => {
+  it("the review seed includes four new adoptable angels and preserves the organizer test cases", async () => {
     const store = createMemoryStore();
     const c = createCampaign(store);
     await seedCampaignReview(c);
     const tree = publicTree(await store.list());
-    expect(tree).toHaveLength(1);
-    expect(tree[0].code).toBe("G26-001");
+    expect(tree.map((angel) => angel.code)).toEqual(["G26-001", "G26-003", "G26-004", "G26-005", "G26-006"]);
+    expect(tree.every((angel) => angel.available)).toBe(true);
     const s = await c.summary();
-    expect(s.published).toBe(1);
-    expect(s.approved).toBe(2); // one published, one approved but not yet published
+    expect(s.published).toBe(5);
+    expect(s.approved).toBe(6); // five published, one approved but not yet published
     const hs = await c.households();
     expect(hs.find((h) => h.family.parent_name === "Avery Example")!.state).toBe("set_aside");
     expect(hs.find((h) => h.family.parent_name === "Quinn Placeholder")!.state).toBe("review");
