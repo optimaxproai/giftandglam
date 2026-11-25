@@ -24,16 +24,21 @@ function demoRows() {
   return state;
 }
 
+export function createSeededReviewCampaign() {
+  // Use the same fictional IDs across preview instances for the initial records.
+  // Records created after seeding still use random IDs.
+  let seedId = 0;
+  let seeding = true;
+  const store = createMemoryStore(emptyState(), () =>
+    seeding ? `a1200000-2026-4000-8000-${String(++seedId).padStart(12, "0")}` : randomUUID(),
+  );
+  const campaign = createCampaign(store);
+  return { store, campaign, ready: seedCampaignReview(campaign).finally(() => { seeding = false; }) };
+}
+
 function fresh(): Holder {
   if (reviewMode()) {
-    // Use the same fictional IDs across preview instances for the initial records.
-    // Records created after seeding still use random IDs.
-    let seedId = 0;
-    let seeding = true;
-    const campaign = createCampaign(createMemoryStore(emptyState(), () =>
-      seeding ? `a1200000-2026-4000-8000-${String(++seedId).padStart(12, "0")}` : randomUUID(),
-    ));
-    return { campaign, ready: seedCampaignReview(campaign).finally(() => { seeding = false; }) };
+    return createSeededReviewCampaign();
   }
   return { campaign: createCampaign(createMemoryStore(demoRows())), ready: Promise.resolve() };
 }

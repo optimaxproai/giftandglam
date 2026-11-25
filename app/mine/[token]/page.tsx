@@ -1,12 +1,11 @@
+import { browserReviewAdoptions, getSponsorStore } from "@/lib/review-sponsorship";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { SiteShell } from "@/components/Festive";
 import { Ornament } from "@/components/Ornament";
 import MineActions from "@/components/MineActions";
 import SponsorChecklist from "@/components/SponsorChecklist";
-import { getCampaign } from "@/lib/campaign";
 import { sponsorInstructions } from "@/lib/sponsorMail";
-import { allChildren, sponsorByToken } from "@/lib/data";
 import { toPublic, pad } from "@/lib/child";
 import { DRIVE, daysUntil, giftDropOff } from "@/lib/drive";
 import { STATUS_LABEL, STATUS_ORDER } from "@/lib/types";
@@ -15,11 +14,15 @@ export const dynamic = "force-dynamic";
 export const metadata = { title:"My Angels | Gift & Glam",referrer:"no-referrer" as const };
 
 export default async function Mine({ params, searchParams }: { params: { token: string }; searchParams?: { already?: string } }) {
-  const sponsor = await sponsorByToken(params.token);
-  if (!sponsor) notFound();
-  const all = await allChildren();
+  const store = await getSponsorStore();
+  const sponsor = await store.sponsorByToken(params.token);
+  if (!sponsor) {
+    if (browserReviewAdoptions()) redirect("/mine?preview=expired");
+    notFound();
+  }
+  const all = await store.list();
   const mine = all.filter((c) => c.sponsor_id === sponsor.id);
-  const gifts=await (await getCampaign()).store.listGiftItems(mine.map(c=>c.id));
+  const gifts=await store.listGiftItems(mine.map(c=>c.id));
   const dl = daysUntil(DRIVE.returnBy);
 
   return (

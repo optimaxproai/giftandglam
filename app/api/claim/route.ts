@@ -1,6 +1,6 @@
+import { browserReviewAdoptions, getSponsorStore, saveReviewChecklist } from "@/lib/review-sponsorship";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCampaign } from "@/lib/campaign";
 import { CampaignError } from "@/lib/campaign/store";
 import { allow, clientIp } from "@/lib/rateLimit";
 import { rememberSponsor, sponsorSession } from "@/lib/sponsor-session";
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   const b = parsed.data;
   if (b.website) return NextResponse.json({ ok: true, token: "x" }); // bots get a fake success
 
-  const store = (await getCampaign()).store;
+  const store = await getSponsorStore();
   try {
     const session=sponsorSession();
     const saved = session ? await store.sponsorByToken(session) : null;
@@ -42,7 +42,11 @@ export async function POST(req: Request) {
       email: b.email,
       phone: b.phone || sameSponsor?.phone || null,
     };
-    const token = await store.claim({ childId: b.childId, name: contact.name, email: contact.email, phone: contact.phone, gift: !!b.gift, sponsorToken: session });
+    const previewContact = browserReviewAdoptions()
+      ? { name: "Anonymous sponsor", email: saved?.email ?? "first-claim@example.invalid", phone: null }
+      : contact;
+    const token = await store.claim({ childId: b.childId, ...previewContact, gift: !!b.gift, sponsorToken: session });
+    await saveReviewChecklist(store, token);
     rememberSponsor(token);
     let emailStatus:"sent"|"unavailable"|"demo"=demoMode()?"demo":"unavailable";
     try {

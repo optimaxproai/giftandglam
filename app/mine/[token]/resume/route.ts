@@ -1,9 +1,9 @@
+import { getSponsorStore } from "@/lib/review-sponsorship";
 import { NextResponse } from "next/server";
-import { sponsorByToken } from "@/lib/data";
 import { rememberSponsor } from "@/lib/sponsor-session";
 
 export async function POST(request: Request, { params }: { params: { token: string } }) {
-  const sponsor = await sponsorByToken(params.token);
+  const sponsor = await (await getSponsorStore()).sponsorByToken(params.token);
   if (!sponsor) return new NextResponse("Not found", { status: 404 });
 
   rememberSponsor(sponsor.token);
