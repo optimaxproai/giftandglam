@@ -1,7 +1,7 @@
 "use client";
 import { useId, useState } from "react";
 
-type Kind = "shirt" | "pants" | "shoes";
+type Kind = "shirt" | "coat" | "pants" | "shoes";
 const sequence = (start: number, end: number, step = 1) => Array.from({ length: Math.floor((end - start) / step) + 1 }, (_, i) => String(start + step * i));
 const sizes = ["XXS", "XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "6XL"];
 const children = [
@@ -12,6 +12,7 @@ const children = [
 ];
 const choices: Record<Kind, typeof children> = {
   shirt: children,
+  coat: children,
   pants: [...children, { label: "Adult waist (inches)", options: sequence(24, 60).map((n) => `Waist ${n}`) }, { label: "Women's numeric / plus", options: ["Women's 00", ...sequence(0, 32, 2).map((n) => `Women's ${n}`), "Women's 1X", "Women's 2X", "Women's 3X", "Women's 4X", "Women's 5X", "Women's 6X"] }],
   shoes: [
     { label: "Infant and toddler (US)", options: sequence(0, 10, .5).map((n) => `Toddler ${n}`) },
@@ -28,7 +29,7 @@ export default function SizeField({ kind, value, onChange }: { kind: Kind; value
   const [custom, setCustom] = useState(false);
   return (
     <div className="field">
-      <label htmlFor={id}>{kind === "shirt" ? "Shirt" : kind === "pants" ? "Pants" : "Shoes"}</label>
+      <label htmlFor={id}>{{ shirt: "Shirt", coat: "Coat", pants: "Pants", shoes: "Shoes" }[kind]}</label>
       <select id={id} value={custom ? "__custom" : value} onChange={(e) => {
         if (e.target.value === "__custom") { setCustom(true); onChange(""); }
         else { setCustom(false); onChange(e.target.value); }

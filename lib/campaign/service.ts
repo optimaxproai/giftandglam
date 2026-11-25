@@ -11,6 +11,7 @@ export type KidInput = {
   ageUnsure?: boolean;
   gender: "Girl" | "Boy" | "Other" | null;
   tops?: string;
+  coatSize?: string;
   bottoms?: string;
   shoes?: string;
   wants: string[];
@@ -68,6 +69,7 @@ export function createCampaign(store: CampaignStore) {
         age_uncertain: k.age != null && !!k.ageUnsure,
         gender: k.gender,
         tops: clean(k.tops) || null,
+        coat_size: clean(k.coatSize) || null,
         bottoms: clean(k.bottoms) || null,
         shoes: clean(k.shoes) || null,
         wants: k.wants.map(clean).filter(Boolean),
@@ -100,8 +102,14 @@ export function createCampaign(store: CampaignStore) {
     };
   }
 
-  async function decide(childId: string, decision: Decision, opts: { reason?: string; by?: string } = {}) {
+  async function decide(childId: string, decision: Decision, opts: { reason?: string; by?: string; pendingOnly?: boolean } = {}) {
     const c = await find(childId);
+    if (opts.pendingOnly) {
+      if (c.decision === "approved") return;
+      if (c.decision !== "pending" && c.decision !== "needs_info") {
+        throw new CampaignError("Review this decision in the household before approving.", "conflict");
+      }
+    }
     const settings = await store.getSettings();
     if (c.approved && decision !== "approved") throw new CampaignError("Unpublish this angel from the tree first.", "conflict");
     const reason = clean(opts.reason);
@@ -110,7 +118,7 @@ export function createCampaign(store: CampaignStore) {
       const ok = canApprove(c, settings.maxAge);
       if (!ok.ok) throw new CampaignError(ok.error, "conflict");
       if (!c.wants.length && !c.needs.length) throw new CampaignError("Add at least one want or need before approving.", "conflict");
-      await store.patchChild(childId, { decision, decision_reason: null, set_aside_code: null, ...stamp });
+      await store.patchChild(childId, { decision, decision_reason: null, set_aside_code: null, ...stamp }, opts.pendingOnly ? c.decision : undefined);
     } else if (decision === "needs_info" || decision === "declined" || decision === "set_aside") {
       if (!reason) throw new CampaignError(decision === "needs_info" ? "Write what you need to know so it is on record." : "Give a short reason so it is on record.");
       await store.patchChild(childId, { decision, decision_reason: reason, set_aside_code: decision === "set_aside" ? "other" : null, ...stamp });
@@ -142,7 +150,7 @@ export function createCampaign(store: CampaignStore) {
   async function publish(childId: string) {
     const c = await find(childId);
     if (c.decision !== "approved" || !c.angel_code) throw new CampaignError("Approve this child first. Approval and publishing are separate steps.", "conflict");
-    await store.patchChild(childId, { approved: true });
+    if (!c.approved) await store.patchChild(childId, { approved: true }, "approved");
   }
   async function unpublish(childId: string) {
     await find(childId);

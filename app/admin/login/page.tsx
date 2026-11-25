@@ -23,7 +23,13 @@ export default function Login() {
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
 
   useEffect(() => {
-    if (new URLSearchParams(location.search).get("error") === "link")
+    const params = new URLSearchParams(location.search);
+    const error = params.get("error");
+    if (params.get("mode") === "forgot") setMode("forgot");
+    if (error === "reset") {
+      setMode("forgot");
+      setMsg({ ok: false, t: "That reset link expired or was opened in a different browser. Request a new reset link and open it here." });
+    } else if (error === "link")
       setMsg({ ok: false, t: "That link expired or was opened in a different browser. Use Email code or your password instead." });
   }, []);
 
@@ -41,7 +47,7 @@ export default function Login() {
       if (error) return fail(error.message);
       location.href = "/admin";
     } else if (mode === "link") {
-      const { error } = await sb().auth.signInWithOtp({ email: addr, options: { emailRedirectTo: `${location.origin}/auth/callback?next=/admin` } });
+      const { error } = await sb().auth.signInWithOtp({ email: addr, options: { emailRedirectTo: `${location.origin}/auth/callback` } });
       if (error) return fail(error.message);
       setSent(true); setBusy(false);
     } else if (mode === "code") {
@@ -55,7 +61,7 @@ export default function Login() {
         location.href = "/admin";
       }
     } else {
-      const { error } = await sb().auth.resetPasswordForEmail(addr, { redirectTo: `${location.origin}/auth/callback?next=/admin/reset` });
+      const { error } = await sb().auth.resetPasswordForEmail(addr, { redirectTo: `${location.origin}/auth/callback` });
       if (error) return fail(error.message);
       setSent(true); setBusy(false);
     }

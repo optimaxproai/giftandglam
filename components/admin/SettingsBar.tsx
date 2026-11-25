@@ -30,7 +30,7 @@ export default function SettingsBar({ maxAge, confirmed }: { maxAge: number; con
         <button className="btn sm" onClick={save} disabled={busy || v.trim() === "" || (confirmed && Number(v) === maxAge)}>{confirmed ? "Change limit" : "Confirm limit"}</button>
         <span className={`pill ${confirmed ? "available" : "late"}`}>{confirmed ? `Limit confirmed: ${maxAge}` : `Starting limit ${maxAge}: please confirm`}</span>
       </div>
-      <p className="muted" style={{ fontSize: ".82rem", marginTop: 8 }}>Children over the limit are set aside with a reason. A household whose only applicant is over the limit leaves the review queue; eligible siblings stay in it. Approved and published angels are never moved.</p>
+      <p className="muted" style={{ fontSize: ".82rem", marginTop: 8 }}>Children over the limit are set aside with a reason. A family whose only applicant is over the limit leaves the review queue; eligible siblings stay in it. Approved and published angels are never moved.</p>
       {msg && <div className={msg.ok ? "ok" : "err"} role="status">{msg.t}</div>}
     </div>
   );

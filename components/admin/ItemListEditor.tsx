@@ -33,7 +33,19 @@ export default function ItemListEditor({ kind, items, onChange, disabled = false
 
   return (
     <div className="field item-list-editor" role="group" aria-labelledby={id}>
-      <span className="lbl" id={id}>{label}</span>
+      <div className="item-editor-header">
+        <span className="lbl" id={id}>{label}</span>
+        <button
+          type="button"
+          className="item-add"
+          ref={addButton}
+          disabled={disabled || items.length >= limit}
+          onClick={() => {
+            focusAfterChange.current = items.length;
+            onChange([...items, ""]);
+          }}
+        >+ Add {item}</button>
+      </div>
       {items.map((value, index) => (
         <div className="item-row" key={index}>
           <input
@@ -46,28 +58,16 @@ export default function ItemListEditor({ kind, items, onChange, disabled = false
           />
           <button
             type="button"
-            className="btn sm ghost"
+            className="item-remove"
             aria-label={`Remove ${item} ${index + 1}`}
             disabled={disabled}
             onClick={() => {
               focusAfterChange.current = Math.min(index, items.length - 2);
               onChange(items.filter((_, i) => i !== index));
             }}
-          >Remove</button>
+          ><span aria-hidden="true">×</span></button>
         </div>
       ))}
-      <div>
-        <button
-          type="button"
-          className="btn sm ghost"
-          ref={addButton}
-          disabled={disabled || items.length >= limit}
-          onClick={() => {
-            focusAfterChange.current = items.length;
-            onChange([...items, ""]);
-          }}
-        >+ Add {item}</button>
-      </div>
     </div>
   );
 }

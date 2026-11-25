@@ -9,21 +9,32 @@ export default function Reset() {
   const [pw2, setPw2] = useState("");
   const [state, setState] = useState<"checking" | "ready" | "nolink" | "done">("checking");
   const [err, setErr] = useState("");
+  const [saving, setSaving] = useState(false);
   const sb = () => createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL || "", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "");
 
   useEffect(() => {
-    sb().auth.getUser().then(({ data }) => setState(data.user ? "ready" : "nolink"));
+    sb().auth.getUser()
+      .then(({ data }) => setState(data.user ? "ready" : "nolink"))
+      .catch(() => setState("nolink"));
   }, []);
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
+    if (saving) return;
     setErr("");
     if (pw.length < 8) return setErr("Use at least 8 characters.");
     if (pw !== pw2) return setErr("The two passwords don't match.");
-    const { error } = await sb().auth.updateUser({ password: pw });
-    if (error) return setErr(error.message);
-    setState("done");
-    setTimeout(() => (location.href = "/admin"), 1200);
+    setSaving(true);
+    try {
+      const { error } = await sb().auth.updateUser({ password: pw });
+      if (error) return setErr(error.message);
+      setState("done");
+      setTimeout(() => location.replace("/admin"), 1200);
+    } catch {
+      setErr("Could not save the password. Try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -35,7 +46,7 @@ export default function Reset() {
         {state === "nolink" && (
           <>
             <div className="err">This reset link has expired or was opened in a different browser.</div>
-            <a className="btn" href="/admin/login">Request a new one</a>
+            <a className="btn" href="/admin/login?mode=forgot">Request a new one</a>
           </>
         )}
         {state === "done" && <div className="ok">Password saved. Taking you to the console…</div>}
@@ -44,7 +55,7 @@ export default function Reset() {
             <PasswordField id="np" label="New password" value={pw} onChange={setPw} autoComplete="new-password" hint="At least 8 characters. Tap the eye to check what you typed." />
             <PasswordField id="np2" label="Type it again" value={pw2} onChange={setPw2} autoComplete="new-password" />
             {err && <div className="err" role="alert">{err}</div>}
-            <button className="btn" type="submit">Save password</button>
+            <button className="btn" type="submit" disabled={saving}>{saving ? "Saving…" : "Save password"}</button>
           </form>
         )}
       </div>

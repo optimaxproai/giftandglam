@@ -76,17 +76,25 @@ export function SiteShell({ children, hero, admin = false }: { children: ReactNo
               {admin ? (
                 <>
                   <Link href="/admin">Overview</Link>
-                  <Link href="/admin/households">Households</Link>
-                  <Link href="/admin/import">Import</Link>
-                  <Link href="/admin/children">Children</Link>
-                  <Link href="/admin/sponsors">Sponsors</Link>
-                  <Link href="/admin/print">Print labels</Link>
-                  <Link href="/admin/account">Account</Link>
+                  <Link href="/admin/households">Families</Link>
+                  <Link href="/admin/children">Children &amp; Gifts</Link>
+                  <Link href="/admin/sponsors">Sponsors &amp; Donations</Link>
+                  <div className="organizer-tools-group">
+                    <details className="organizer-tools">
+                      <summary>Organizer Tools</summary>
+                      <div className="organizer-tools-links">
+                        <Link href="/admin/import">Import Applications</Link>
+                        <Link href="/admin/print">Print Gift Labels</Link>
+                      </div>
+                    </details>
+                    <Link href="/admin/account">Account</Link>
+                  </div>
                   <Link href="/">View tree</Link>
                 </>
               ) : (
                 <>
                   <Link href="/">The tree</Link>
+                  <Link href="/mine">My Angels</Link>
                   <Link href="/admin">Organizers</Link>
                 </>
               )}

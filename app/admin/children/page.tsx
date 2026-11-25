@@ -1,68 +1,57 @@
 import Link from "next/link";
-import { readGiftCards } from "@/lib/giftCards";
 import { SiteShell } from "@/components/Festive";
-import { Ornament } from "@/components/Ornament";
-import StatusButtons from "@/components/admin/StatusButtons";
+import ChildrenTable from "@/components/admin/ChildrenTable";
 import { requireAdmin } from "@/lib/auth";
-import { allChildren } from "@/lib/data";
-import { DECISION_LABEL, DECISION_PILL } from "@/lib/campaign/rules";
-import { STATUS_LABEL } from "@/lib/types";
+import { getCampaign } from "@/lib/campaign";
+import GiftManagement from "@/components/admin/GiftManagement";
 
 export const dynamic = "force-dynamic";
 
-const FILTERS: [string, string][] = [["", "All"], ["review", "Needs review"], ["approved", "Approved, not published"], ["tree", "On the tree"], ["available", "Needs a sponsor"], ["claimed", "Sponsored"], ["purchased", "Gifts bought"], ["received", "Gifts received"], ["giftcard", "Gift card pending"], ["set_aside", "Set aside"]];
-
-export default async function Children({ searchParams }: { searchParams: { filter?: string } }) {
+export default async function Children({ searchParams }: { searchParams: { filter?: string; view?: string } }) {
   await requireAdmin();
-  const f = searchParams.filter || "";
-  const all = await allChildren();
-  const list = all.filter((c) => {
-    if (f === "review") return c.decision === "pending";
-    if (f === "approved") return c.decision === "approved" && !c.approved;
-    if (f === "tree") return c.approved;
-    if (f === "set_aside") return c.decision === "set_aside";
-    if (f === "giftcard") return c.gift_card_status === "pledged";
-    if (f === "received") return c.approved && (c.status === "returned" || c.status === "given");
-    if (f) return c.approved && c.status === f;
-    return true;
-  });
-  const sibCount = (id: string) => all.filter((x) => x.family_id === id).length - 1;
+  const { store } = await getCampaign();
+  const [children, gifts] = await Promise.all([store.list(), store.listGiftItems()]);
+  const byGift = searchParams.view === "gift";
+  const familySizes = new Map<string, number>();
+  for (const c of children) familySizes.set(c.family_id, (familySizes.get(c.family_id) ?? 0) + 1);
+
+  const rows = children.map((c) => ({
+    id: c.id,
+    name: c.full_name,
+    firstName: c.first_name,
+    photo: !!c.photo_path,
+    code: c.angel_code,
+    age: c.age,
+    gender: c.gender,
+    familyId: c.family_id,
+    parent: c.family?.parent_name ?? "",
+    phone: c.family?.phone ?? "",
+    siblings: (familySizes.get(c.family_id) ?? 1) - 1,
+    decision: c.decision,
+    reason: c.decision_reason,
+    onTree: c.approved,
+    status: c.status,
+    sponsor: c.sponsor?.name ?? "",
+    giftCardStatus: c.gift_card_status,
+  }));
 
   return (
     <SiteShell admin>
-      <div className="page-h"><h2>Children</h2><div className="acts"><Link href="/admin/households/new" className="btn">+ Enter a household</Link><Link href="/admin/import" className="btn ghost">Import an email</Link></div></div>
-      <nav className="tabs" aria-label="Filter">
-        {FILTERS.map(([k, label]) => (
-          <Link key={k} href={k ? `/admin/children?filter=${k}` : "/admin/children"} style={f === k ? { color: "var(--ink)", borderBottomColor: "var(--cran)" } : undefined}>{label}</Link>
-        ))}
-      </nav>
-      {list.length === 0 ? (
-        <div className="empty"><h3>Nothing here yet</h3><p>Enter a household from a printed email to add the first children.</p></div>
-      ) : (
-        <div className="tw">
-          <table>
-            <thead><tr><th>Child (private)</th><th>Family</th><th>Decision</th><th>Sponsorship</th><th>Gift receipt</th><th>Gift card</th><th>Actions</th></tr></thead>
-            <tbody>
-              {list.map((c) => (
-                <tr key={c.id}>
-                  <td>
-                    <Link href={`/admin/children/${c.id}`} style={{ display: "flex", gap: 10, alignItems: "center", textDecoration: "none", color: "inherit" }}>
-                      <span style={{ transform: "scale(.6)", transformOrigin: "left center", width: 44, flex: "none" }}><Ornament id={c.id} name={c.first_name} photo={!!c.photo_path} /></span>
-                      <span><b>{c.full_name}</b><br /><span className="muted">{c.angel_code || "No code yet"} · {c.age ?? "no age"} · {c.gender || ""}</span></span>
-                    </Link>
-                  </td>
-                  <td><Link href={`/admin/households/${c.family_id}`}>{c.family?.parent_name}</Link><br /><span className="muted">{c.family?.phone}{sibCount(c.family_id) > 0 ? ` · ${sibCount(c.family_id)} sibling${sibCount(c.family_id) > 1 ? "s" : ""}` : ""}</span></td>
-                  <td><span className={`pill ${DECISION_PILL[c.decision]}`}>{DECISION_LABEL[c.decision]}</span>{c.approved && <><br /><span className="pill available">On the tree</span></>}{c.decision_reason && <div className="muted" style={{ fontSize: ".78rem", maxWidth: 220 }}>{c.decision_reason}</div>}</td>
-                  <td>{c.approved ? <><span className={`pill ${c.status}`}>{STATUS_LABEL[c.status]}</span><br /><span className="muted">{c.sponsor ? c.sponsor.name : "No sponsor yet"}</span></> : <span className="muted">Not on the tree</span>}</td>
-                  <td>{c.status === "returned" || c.status === "given" ? <><span className="pill returned">Received</span><br /><span className="muted">{c.returned_at ? new Date(c.returned_at).toLocaleDateString() : ""}</span></> : c.approved && c.sponsor ? <span className="muted">Not yet</span> : <span className="muted">—</span>}</td>
-                  <td>{readGiftCards(c).length ? <>{readGiftCards(c).map((gift, i) => <div key={i}>{gift.store} ${gift.amount}</div>)}<span className="muted">{c.gift_card_status === "none" ? "Not pledged" : c.gift_card_status}</span></> : <span className="muted">None asked</span>}</td>
-                  <td>{c.approved ? <StatusButtons id={c.id} status={c.status} gift={c.gift_card_status} compact /> : <Link className="btn sm ghost" href={`/admin/households/${c.family_id}`}>Decide</Link>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="page-h">
+        <h2>Children &amp; Gifts</h2>
+        <div className="acts">
+          <Link href="/admin/households/new" className="btn">+ Add a family</Link>
+          <Link href="/admin/import" className="btn ghost">Import an email</Link>
         </div>
-      )}
+      </div>
+      <nav className="tabs" aria-label="Children and gifts views">
+        <Link href="/admin/children" aria-current={byGift ? undefined : "page"} className={!byGift ? "active" : ""}>By Child</Link>
+        <Link href="/admin/children?view=gift" aria-current={byGift ? "page" : undefined} className={byGift ? "active" : ""}>By Gift</Link>
+      </nav>
+      {byGift ? <GiftManagement key={searchParams.filter} gifts={gifts} initialFilter={searchParams.filter}
+        angels={rows.map((row, index) => ({
+          ...row, code: row.code || `Applicant ${children[index].no}`, published: row.onTree, sponsored: !!children[index].sponsor_id,
+        }))} /> : <ChildrenTable key={searchParams.filter ?? ""} rows={rows} gifts={gifts} initialFilter={searchParams.filter} />}
     </SiteShell>
   );
 }

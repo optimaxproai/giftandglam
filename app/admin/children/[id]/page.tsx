@@ -7,7 +7,8 @@ import ChildEditor from "@/components/admin/ChildEditor";
 import StatusButtons from "@/components/admin/StatusButtons";
 import { requireAdmin } from "@/lib/auth";
 import { allChildren } from "@/lib/data";
-import { pad } from "@/lib/child";
+import { onTree, pad } from "@/lib/child";
+import TreeToggle from "@/components/admin/TreeToggle";
 import { STATUS_LABEL } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export default async function AdminChild({ params }: { params: { id: string } })
   const c = all.find((x) => x.id === params.id);
   if (!c) notFound();
   const fam = c.family;
+  const onPublicTree = onTree(c);
   const sibs = all.filter((x) => x.family_id === c.family_id && x.id !== c.id);
 
   return (
@@ -28,14 +30,14 @@ export default async function AdminChild({ params }: { params: { id: string } })
           <h2 style={{ marginTop: 10 }}>{c.full_name} <span className="muted" style={{ fontFamily: "var(--font-body)", fontSize: "1rem" }}>No. {pad(c.no)}</span></h2>
           <div className="chips" style={{ marginTop: 6 }}>
             <span className={`pill ${c.status}`}>{STATUS_LABEL[c.status]}</span>
-            {!c.approved && <span className="pill late">Draft, not on the tree</span>}
-            {c.approved && <Link href={`/angel/${c.id}`} className="chip">See the public page</Link>}
+            <TreeToggle childId={c.id} on={c.approved} canPublish={c.decision === "approved" && !!c.angel_code} />
+            {onPublicTree ? <Link href={`/angel/${c.id}`} className="chip">See the public page</Link> : <span className="muted">Not on the tree, so there is no public page yet.</span>}
           </div>
         </div>
       </div>
       <div className="cols">
         <ChildEditor
-          child={{ id: c.id, fullName: c.full_name, age: c.age, gender: c.gender, tops: c.tops || "", bottoms: c.bottoms || "", shoes: c.shoes || "", wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.fav_color || "", giftCards: readGiftCards(c), photo: !!c.photo_path, photoPublic: c.photo_public, approved: c.approved, notes: c.organizer_notes || "" }}
+          child={{ id: c.id, fullName: c.full_name, age: c.age, gender: c.gender, tops: c.tops || "", coatSize: c.coat_size || "", bottoms: c.bottoms || "", shoes: c.shoes || "", wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.fav_color || "", giftCards: readGiftCards(c), photo: !!c.photo_path, photoPublic: c.photo_public, approved: c.approved, notes: c.organizer_notes || "" }}
           family={{ parentName: fam?.parent_name || "", phone: fam?.phone || "", email: fam?.email || "", story: fam?.story || "" }}
         />
         <div style={{ display: "grid", gap: 16 }}>

@@ -30,6 +30,7 @@ export const PARSE_TOOL = {
                   full_name: { type: "string" },
                   age: { type: ["integer", "null"] },
                   gender: { type: ["string", "null"], enum: ["Girl", "Boy", "Other", null] },
+                  coat_size: { type: ["string", "null"] },
                   shirt_size: { type: ["string", "null"] },
                   pants_size: { type: ["string", "null"] },
                   shoe_size: { type: ["string", "null"] },
@@ -69,6 +70,7 @@ const Child = z.object({
   full_name: z.string(),
   age: z.number().nullable().optional(),
   gender: z.string().nullable().optional(),
+  coat_size: z.string().nullable().optional(),
   shirt_size: z.string().nullable().optional(),
   pants_size: z.string().nullable().optional(),
   shoe_size: z.string().nullable().optional(),
@@ -92,8 +94,11 @@ export const ParsedSchema = z.object({
 export type DraftChild = {
   fullName: string;
   age: number | null;
+  ageUnsure?: boolean;
+  notes?: string;
   gender: "Girl" | "Boy" | "Other" | null;
   tops: string;
+  coatSize?: string;
   bottoms: string;
   shoes: string;
   wants: string[];
@@ -105,7 +110,7 @@ export type DraftChild = {
   giftCards?: { store: string; amount: number }[];
   photo: { page: number; box: { x: number; y: number; w: number; h: number } } | null;
 };
-export type DraftFamily = { parentName: string; phone: string; email: string; story: string; children: DraftChild[] };
+export type DraftFamily = { parentName: string; phone: string; email: string; story: string; children: DraftChild[]; source?: string };
 
 const GIFT_ITEM = /^(.*?)\s*gift\s*cards?$/i;
 const clean = (s?: string | null) => (s || "").replace(/\s+/g, " ").trim();
@@ -157,6 +162,7 @@ export function normalizeParsed(raw: z.infer<typeof ParsedSchema>): DraftFamily[
             age: c.age == null || !Number.isFinite(c.age) ? null : Math.max(0, Math.min(21, Math.round(c.age))),
             gender: g.startsWith("f") || g === "girl" ? "Girl" : g.startsWith("m") || g === "boy" ? "Boy" : g ? "Other" : null,
             tops: clean(c.shirt_size),
+            coatSize: clean(c.coat_size),
             bottoms: clean(c.pants_size),
             shoes: clean(c.shoe_size),
             wants,

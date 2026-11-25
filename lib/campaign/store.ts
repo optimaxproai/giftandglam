@@ -5,13 +5,15 @@ import type { LabelStockSetting } from "../print";
 import { DEFAULT_MAX_AGE } from "./rules";
 import type { ChildRow, FamilyRow, SponsorRow } from "../types";
 import { CONTACT_COLUMNS, type SponsorContact, type SponsorContactInput, type SponsorFlyer } from "../sponsorContacts";
+import { requestItems, maySponsorEdit, type GiftItem, type AdminGiftEdit } from "../giftItems";
+import type { DonationOffer,DonationOfferInput,DonationOfferUpdate } from "../donations";
 
 export type Settings = { maxAge: number; maxAgeConfirmed: boolean; labelStock: LabelStockSetting };
 
 export type NewFamily = { parent_name: string; phone: string | null; email: string | null; story: string | null; source_label: string | null };
 export type NewKid = Pick<
   ChildRow,
-  "full_name" | "first_name" | "age" | "age_uncertain" | "gender" | "tops" | "bottoms" | "shoes" | "wants" | "needs" | "faves" | "fav_color" | "gift_store" | "gift_amount" | "gift_cards" | "decision" | "decision_reason" | "set_aside_code" | "organizer_notes"
+  "full_name" | "first_name" | "age" | "age_uncertain" | "gender" | "tops" | "coat_size" | "bottoms" | "shoes" | "wants" | "needs" | "faves" | "fav_color" | "gift_store" | "gift_amount" | "gift_cards" | "decision" | "decision_reason" | "set_aside_code" | "organizer_notes"
 >;
 
 export class CampaignError extends Error {
@@ -25,7 +27,7 @@ export interface CampaignStore {
   list(): Promise<ChildRow[]>;
   findFamily(phoneNorm: string, emailNorm: string): Promise<string | null>;
   createHousehold(f: NewFamily, kids: NewKid[], existingFamilyId?: string | null): Promise<{ familyId: string; childIds: string[] }>;
-  patchChild(id: string, patch: Partial<ChildRow>): Promise<void>;
+  patchChild(id: string, patch: Partial<ChildRow>, expectedDecision?: ChildRow["decision"]): Promise<void>;
   patchFamily(id: string, patch: Partial<FamilyRow> & { phone_norm?: string | null; email_norm?: string | null }): Promise<void>;
   getSettings(): Promise<Settings>;
   saveSettings(p: Partial<Settings>): Promise<void>;
@@ -34,6 +36,13 @@ export interface CampaignStore {
   sponsorFlyer(id: string): Promise<SponsorFlyer | null>;
   claim(a: { childId: string; name: string; email: string; phone: string | null; gift: boolean; sponsorToken: string | null }): Promise<string>;
   sponsorByToken(token: string): Promise<SponsorRow | null>;
+  sponsorByEmail(email:string):Promise<SponsorRow|null>;
+  listGiftItems(childIds?: string[]): Promise<GiftItem[]>;
+  setSponsorGift(token: string, itemId: string, purchased: boolean): Promise<boolean>;
+  setAdminGift(edit: AdminGiftEdit): Promise<boolean>;
+  createDonationOffer(input:DonationOfferInput): Promise<void>;
+  listDonationOffers():Promise<DonationOffer[]>;
+  updateDonationOffer(id:string,patch:DonationOfferUpdate):Promise<boolean>;
   mineAction(a: { token: string; childId: string; action: "bought" | "release" }): Promise<boolean>;
 }
 
@@ -41,15 +50,27 @@ const nowIso = () => new Date().toISOString();
 
 /* ------------------------------------------------------------------ memory */
 
-type MemState = { children: ChildRow[]; families: Map<string, FamilyRow & { phone_norm?: string | null; email_norm?: string | null }>; sponsors: Map<string, SponsorRow & { email_norm: string }>; sponsorContacts: Map<string, SponsorContact>; sponsorFlyers: Map<string, SponsorFlyer>; settings: Settings; no: number; code: number };
+type MemState = { children: ChildRow[]; families: Map<string, FamilyRow & { phone_norm?: string | null; email_norm?: string | null }>; sponsors: Map<string, SponsorRow & { email_norm: string }>; sponsorContacts: Map<string, SponsorContact>; sponsorFlyers: Map<string, SponsorFlyer>; giftItems: GiftItem[]; donationOffers:DonationOffer[]; settings: Settings; no: number; code: number };
 
 export function emptyState(): MemState {
-  return { children: [], families: new Map(), sponsors: new Map(), sponsorContacts: new Map(), sponsorFlyers: new Map(), settings: { maxAge: DEFAULT_MAX_AGE, maxAgeConfirmed: false, labelStock: null }, no: 0, code: 0 };
+  return { children: [], families: new Map(), sponsors: new Map(), sponsorContacts: new Map(), sponsorFlyers: new Map(), giftItems: [], donationOffers:[], settings: { maxAge: DEFAULT_MAX_AGE, maxAgeConfirmed: false, labelStock: null }, no: 0, code: 0 };
 }
 
 /** In-memory store. Mirrors the database rules (angel codes, published-needs-approved, atomic claim). */
-export function createMemoryStore(state: MemState = emptyState()): CampaignStore & { state: MemState } {
+export function createMemoryStore(state: MemState = emptyState(), newRecordId = randomUUID as () => string): CampaignStore & { state: MemState } {
+  state.giftItems ??= [];
+  state.donationOffers ??= [];
   const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
+  function sync(c: ChildRow) {
+    state.giftItems.filter(g => g.child_id === c.id).forEach(g => { g.active = false; });
+    for (const request of requestItems(c)) {
+      const previous = state.giftItems.find(g => g.child_id === c.id && g.item_key === request.item_key);
+      if (previous) Object.assign(previous, request);
+      else state.giftItems.push({ ...request, id: newRecordId(), purchase_source: null, received: false, donation_assigned: false });
+    }
+  }
+  const clearSponsorPurchases = (id: string) => state.giftItems.filter(g => g.child_id === id && g.purchase_source === "sponsor" && !g.received).forEach(g => { g.purchase_source = null; });
+  state.children.forEach(sync);
   const join = (c: ChildRow): ChildRow => ({ ...clone(c), family: clone(state.families.get(c.family_id) ?? null), sponsor: c.sponsor_id ? clone(state.sponsors.get(c.sponsor_id) ?? null) : null });
   const assignCode = (c: ChildRow) => {
     if (c.decision === "approved" && !c.angel_code) c.angel_code = `G26-${String(++state.code).padStart(3, "0")}`;
@@ -66,28 +87,32 @@ export function createMemoryStore(state: MemState = emptyState()): CampaignStore
     async createHousehold(f, kids, existingFamilyId) {
       let familyId = existingFamilyId || "";
       if (!familyId) {
-        familyId = randomUUID();
+        familyId = newRecordId();
         state.families.set(familyId, { id: familyId, ...f, created_at: nowIso(), phone_norm: normPhone(f.phone) || null, email_norm: normEmail(f.email) || null });
       }
       const childIds: string[] = [];
       for (const k of kids) {
         const c: ChildRow = {
-          id: randomUUID(), no: ++state.no, family_id: familyId, ...k,
+          id: newRecordId(), no: ++state.no, family_id: familyId, ...k,
           gift_card_status: "none", photo_path: null, photo_public: false, approved: false, status: "available",
           sponsor_id: null, claimed_at: null, returned_at: null, angel_code: null, decided_at: null, decided_by: null,
         };
         assignCode(c);
         state.children.push(c);
+        sync(c);
         childIds.push(c.id);
       }
       return { familyId, childIds };
     },
-    async patchChild(id, patch) {
+    async patchChild(id, patch, expectedDecision) {
       const c = state.children.find((x) => x.id === id);
       if (!c) throw new CampaignError("Child not found.", "not_found");
+      if (expectedDecision && c.decision !== expectedDecision) throw new CampaignError("This decision changed. Refresh and try again.", "conflict");
       const next = { ...c, ...patch };
       if (next.approved && next.decision !== "approved") throw new CampaignError("Only approved children can be published.", "conflict");
+      if (patch.sponsor_id !== undefined && c.sponsor_id && c.sponsor_id !== patch.sponsor_id) clearSponsorPurchases(c.id);
       Object.assign(c, patch);
+      sync(c);
       assignCode(c);
     },
     async patchFamily(id, patch) {
@@ -138,6 +163,30 @@ export function createMemoryStore(state: MemState = emptyState()): CampaignStore
       const sp = [...state.sponsors.values()].find((s) => s.token === token);
       return sp ? clone(sp) : null;
     },
+    async sponsorByEmail(email){const sp=[...state.sponsors.values()].find(x=>x.email_norm===normEmail(email));return sp?clone(sp):null;},
+    async listGiftItems(childIds) {
+      state.children.forEach(sync);
+      return clone(state.giftItems.filter(g => !childIds || childIds.includes(g.child_id)).sort((a,b) => a.position-b.position));
+    },
+    async setSponsorGift(token, itemId, purchased) {
+      const sp = [...state.sponsors.values()].find(s => s.token === token);
+      const g = state.giftItems.find(g => g.id === itemId);
+      const c = state.children.find(c => c.id === g?.child_id);
+      if (!sp || !g || !c || !maySponsorEdit(g,c,sp.id)) return false;
+      g.purchase_source = purchased ? "sponsor" : null;
+      return true;
+    },
+    async setAdminGift(edit) {
+      const g = state.giftItems.find(g => g.id === edit.itemId && g.active);
+      if (!g) return false;
+      if (edit.action === "purchase") g.purchase_source = edit.source;
+      else if (edit.action === "received") g.received = edit.value;
+      else g.donation_assigned = edit.value;
+      return true;
+    },
+    async createDonationOffer(input){state.donationOffers.push({...input,id:randomUUID(),status:"pending",created_at:nowIso(),received_cents:null,organizer_notes:""});},
+    async listDonationOffers(){return clone(state.donationOffers).reverse();},
+    async updateDonationOffer(id,patch){const d=state.donationOffers.find(d=>d.id===id);if(!d||d.purpose==="other"&&patch.received_cents!==null)return false;Object.assign(d,patch);return true;},
     async mineAction({ token, childId, action }) {
       const sp = [...state.sponsors.values()].find((s) => s.token === token);
       const c = state.children.find((x) => x.id === childId);
@@ -148,7 +197,9 @@ export function createMemoryStore(state: MemState = emptyState()): CampaignStore
         return true;
       }
       if (c.status !== "claimed" && c.status !== "purchased") return false;
+      if (state.giftItems.some(g => g.child_id === c.id && g.received)) return false;
       c.status = "available";
+      clearSponsorPurchases(c.id);
       c.sponsor_id = null;
       c.claimed_at = null;
       if (c.gift_card_status === "pledged") c.gift_card_status = "none";
@@ -192,10 +243,16 @@ export function createSupabaseStore(): CampaignStore {
       const rows = ok(await db().from("children").insert(kids.map((k) => ({ ...k, family_id: familyId }))).select("id")) as { id: string }[];
       return { familyId, childIds: rows.map((r) => r.id) };
     },
-    async patchChild(id, patch) {
+    async patchChild(id, patch, expectedDecision) {
       const { family, sponsor, ...cols } = patch as ChildRow;
       void family; void sponsor;
-      ok(await db().from("children").update(cols).eq("id", id));
+      const update = db().from("children").update(cols).eq("id", id);
+      if (!expectedDecision) {
+        ok(await update);
+        return;
+      }
+      const updated = ok(await update.eq("decision", expectedDecision).select("id"));
+      if (!updated?.length) throw new CampaignError("This decision changed. Refresh and try again.", "conflict");
     },
     async patchFamily(id, patch) {
       ok(await db().from("families").update(patch).eq("id", id));
@@ -239,6 +296,28 @@ export function createSupabaseStore(): CampaignStore {
     async sponsorByToken(token) {
       return (ok(await db().from("sponsors").select("*").eq("token", token).maybeSingle()) as SponsorRow | null) ?? null;
     },
+    async sponsorByEmail(email){return (ok(await db().from("sponsors").select("*").eq("email_norm",normEmail(email)).maybeSingle()) as SponsorRow|null)??null;},
+    async listGiftItems(childIds) {
+      if (childIds?.length === 0) return [];
+      const result: GiftItem[] = [];
+      for (let offset=0;;offset+=500) {
+        let q = db().from("gift_items").select("*").order("id").range(offset,offset+499);
+        if (childIds) q=q.in("child_id",childIds);
+        const page = (ok(await q) || []) as GiftItem[];
+        result.push(...page);
+        if (page.length < 500) break;
+      }
+      return result.sort((a,b) => a.position-b.position);
+    },
+    async setSponsorGift(token,itemId,purchased) {
+      return !!ok(await db().rpc("set_sponsor_gift", { p_token: token, p_item: itemId, p_purchased: purchased }));
+    },
+    async setAdminGift(edit) {
+      return !!ok(await db().rpc("edit_admin_gift",{p_item:edit.itemId,p_action:edit.action,p_source:edit.action==="purchase"?edit.source:null,p_value:edit.action==="purchase"?null:edit.value}));
+    },
+    async createDonationOffer(input){ok(await db().from("donation_offers").insert(input));},
+    async listDonationOffers(){const result:DonationOffer[]=[];for(let offset=0;;offset+=500){const rows=(ok(await db().from("donation_offers").select("*").order("created_at",{ascending:false}).order("id").range(offset,offset+499))||[]) as DonationOffer[];result.push(...rows);if(rows.length<500)break;}return result;},
+    async updateDonationOffer(id,patch){const rows=ok(await db().from("donation_offers").update(patch).eq("id",id).select("id"));return !!rows?.length;},
     async mineAction({ token, childId, action }) {
       const sp = ok(await db().from("sponsors").select("id").eq("token", token).maybeSingle()) as { id: string } | null;
       if (!sp) return false;
@@ -246,10 +325,7 @@ export function createSupabaseStore(): CampaignStore {
         const r = ok(await db().from("children").update({ status: "purchased" }).eq("id", childId).eq("sponsor_id", sp.id).eq("status", "claimed").select("id")) as { id: string }[];
         return r.length > 0;
       }
-      const r = ok(await db().from("children").update({ status: "available", sponsor_id: null, claimed_at: null }).eq("id", childId).eq("sponsor_id", sp.id).in("status", ["claimed", "purchased"]).select("id,gift_card_status")) as { id: string; gift_card_status: string }[];
-      if (!r.length) return false;
-      if (r[0].gift_card_status === "pledged") ok(await db().from("children").update({ gift_card_status: "none" }).eq("id", childId));
-      return true;
+      return !!ok(await db().rpc("release_sponsor_angel", { p_token: token, p_child: childId }));
     },
   };
 }

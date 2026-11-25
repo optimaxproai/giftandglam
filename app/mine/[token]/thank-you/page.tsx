@@ -1,0 +1,41 @@
+import { browserReviewAdoptions, getSponsorStore } from "@/lib/review-sponsorship";
+import Link from "next/link";
+import {notFound, redirect} from "next/navigation";
+import {SiteShell} from "@/components/Festive";
+import Celebration from "@/components/Celebration";
+import SponsorSizes from "@/components/SponsorSizes";
+import SponsorChecklist from "@/components/SponsorChecklist";
+import ShareCampaign from "@/components/ShareCampaign";
+import {toPublic} from "@/lib/child";
+import {sponsorInstructions,organizerEmail} from "@/lib/sponsorMail";
+import {DRIVE,giftDropOff} from "@/lib/drive";
+import {demoMode} from "@/lib/demo";
+
+export const dynamic="force-dynamic";
+export const metadata={title:"Thank You | Gift & Glam",referrer:"no-referrer" as const,robots:{index:false,follow:false}};
+
+export default async function ThankYou({params,searchParams}:{params:{token:string};searchParams:{angel?:string;mail?:string}}){
+  // A public angel code alone never grants sponsor access. Verify the private token and ownership.
+  const store = await getSponsorStore();
+  const sponsor = await store.sponsorByToken(params.token);
+  if (!sponsor) {
+    if (browserReviewAdoptions()) redirect("/mine?preview=expired");
+    notFound();
+  }
+  const all = await store.list();
+  const row=all.find(c=>c.sponsor_id===sponsor.id&&c.angel_code===searchParams.angel);if(!row)notFound();
+  const c=toPublic(row,all),items=await store.listGiftItems([row.id]);const siblings=c.siblings.filter(s=>s.available);
+  const accepted=searchParams.mail==="sent",preview=demoMode();
+  return <SiteShell><Celebration mode="holiday"/>
+    <section className="panel thank-you-hero"><div className="thank-you-star" aria-hidden="true">★</div><h2>Thank you for making Christmas magical!</h2><p>You are sponsoring <b>Angel {c.code}</b>. Your kindness is helping make a child’s Christmas brighter.</p>
+      <p className="ok" role="status">Email confirmation is coming soon. For now, save your gift list below, or take a photo of this page, so you always have it with you.</p>
+      <div className="panel gift-pdf-card" style={{margin:"14px auto",maxWidth:620,textAlign:"left"}}><h3 style={{marginBottom:6}}>Your gift list, ready to print or keep</h3><p className="muted" style={{marginBottom:10}}>A one-page PDF with {c.code}&apos;s sizes, wish list, return date and drop-off details, plus a gift bag label. <b>Take a photo of it with your phone</b> so you always have your list.</p><div className="acts"><a className="btn gold" href={`/mine/${params.token}/pdf?angel=${encodeURIComponent(c.code)}&download=1`}>Download PDF</a><a className="btn ghost" href={`/mine/${params.token}/pdf?angel=${encodeURIComponent(c.code)}`} target="_blank" rel="noopener">Open and print</a></div></div>
+      <div className="acts"><Link href={`/mine/${params.token}`} className="btn green">Go to My Angels</Link><form action={`/mine/${params.token}/resume`} method="post"><button className="btn gold">Adopt Another Angel</button></form><Link href="/donate" className="btn ghost">Ways to Donate</Link></div>
+    </section>
+    <div className="cols thank-you-columns"><section className="panel"><h2>Angel <span className="numeric-text">{c.code}</span> · Your shopping list</h2><p className="muted">{[c.age!=null?`${c.age} years old`:"Age not stated",c.gender].filter(Boolean).join(" · ")}</p><SponsorSizes child={c} />{c.faves.length>0&&<p className="muted">Interests: {c.faves.join(", ")}</p>}
+      <SponsorChecklist token={params.token} items={items} code={c.code} instructions={sponsorInstructions(c)} editable={row.status==="claimed"||row.status==="purchased"}/>
+    </section><section className="panel"><h2>Everything you need to do</h2><ol className="thank-you-list"><li>{DRIVE.giftSuggestion}</li><li>Mark purchased gifts in My Angels, then select Done shopping.</li><li>Return gifts <b>unwrapped by {DRIVE.returnByLabel}</b>. Label every bag with {c.code}.</li><li><b>Gift drop-off</b><p style={{whiteSpace:"pre-line"}}>{giftDropOff()}</p></li><li>Gift drive giveaway: <b>{DRIVE.giveawayLabel}</b>.</li><li>If your plans change, <a href={`mailto:${organizerEmail}`}>contact the organizer</a>.</li></ol>{!browserReviewAdoptions() && <p className="muted">Save your private My Angels link. Lost it later? <Link href="/mine">Recover it with your email.</Link></p>}</section></div>
+    {siblings.length>0&&<section className="panel campaign-siblings"><h2>Sibling angels available</h2><p className="muted">These angels are still available. Adopting another angel is entirely optional.</p><div className="sib-grid">{siblings.map(s=><form key={s.id} action={`/mine/${params.token}/resume`} method="post" className="fact"><input type="hidden" name="angel" value={s.firstName}/><h3 className="numeric-text">{s.firstName}</h3><p>{s.age!=null?`${s.age} years old`:"Age not stated"} · Available</p><button className="btn ghost sm">View wish list</button></form>)}</div></section>}
+    <ShareCampaign/>
+  </SiteShell>;
+}
