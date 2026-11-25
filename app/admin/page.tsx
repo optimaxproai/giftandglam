@@ -37,7 +37,7 @@ export default async function AdminHome() {
         <div className="acts"><Link href="/admin/households/new" className="btn">+ Enter a household</Link><Link href="/admin/households" className="btn ghost">Households</Link><Link href="/admin/gifts" className="btn ghost">Gifts Management</Link></div>
       </div>
       {!s.settings.maxAgeConfirmed && <div className="banner-warn">The season age limit starts at {s.settings.maxAge} and has not been confirmed. <Link href="/admin/households">Confirm it on the Households page</Link> before deciding anyone.</div>}
-      <div className="kpis">
+      <div className="kpis overview-kpis">
         <Link className="kpi" href="/admin/households?state=review"><small>Households to review</small><b>{s.households.review}</b><span>{s.households.waiting} waiting on a family</span></Link>
         <Link className="kpi" href="/admin/children?filter=set_aside"><small>Set aside</small><b>{s.setAside}</b><span>{s.households.set_aside} households out of the queue</span></Link>
         <Link className="kpi" href="/admin/children?filter=tree"><small>On the tree</small><b>{s.published}</b><span>goal {DRIVE.goal} · {approvedNotPublished} approved, not published</span></Link>

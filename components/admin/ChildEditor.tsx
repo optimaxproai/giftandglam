@@ -111,11 +111,9 @@ export default function ChildEditor({ child, family }: { child: EditChild; famil
           <SizeField kind="pants" value={c.bottoms} onChange={(bottoms) => set({ bottoms })} />
           <SizeField kind="shoes" value={c.shoes} onChange={(shoes) => set({ shoes })} />
         </div>
-        <div className="two">
+        <div className="two child-gift-fields">
           <ItemListEditor kind="wants" items={c.wants} onChange={(wants) => set({ wants })} disabled={busy} />
           <ItemListEditor kind="needs" items={c.needs} onChange={(needs) => set({ needs })} disabled={busy} />
-        </div>
-        <div className="two">
           <ItemListEditor kind="interests" items={c.faves} onChange={(faves) => set({ faves })} disabled={busy} />
           <GiftCardEditor cards={c.giftCards} onChange={(giftCards) => set({ giftCards })} disabled={busy} />
         </div>

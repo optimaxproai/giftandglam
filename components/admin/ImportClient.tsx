@@ -319,11 +319,9 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
                   <SizeField kind="pants" value={k.bottoms} onChange={(bottoms) => setKid(f.key, k.key, { bottoms })} />
                   <SizeField kind="shoes" value={k.shoes} onChange={(shoes) => setKid(f.key, k.key, { shoes })} />
                 </div>
-                <div className="two">
+                <div className="two child-gift-fields">
                   <ItemListEditor kind="wants" items={k.wants} onChange={(wants) => setKid(f.key, k.key, { wants })} disabled={f.state === "saving" || f.state === "saved"} />
                   <ItemListEditor kind="needs" items={k.needs} onChange={(needs) => setKid(f.key, k.key, { needs })} disabled={f.state === "saving" || f.state === "saved"} />
-                </div>
-                <div className="two">
                   <ItemListEditor kind="interests" items={k.faves} onChange={(faves) => setKid(f.key, k.key, { faves })} disabled={f.state === "saving" || f.state === "saved"} />
                   <GiftCardEditor cards={k.giftCards} onChange={(giftCards) => setKid(f.key, k.key, { giftCards })} disabled={f.state === "saving" || f.state === "saved"} />
                 </div>

@@ -7,7 +7,7 @@ import GiftCardEditor from "./GiftCardEditor";
 import { cleanGiftCards, type GiftCard } from "@/lib/giftCards";
 
 type Kid = { key: string; name: string; age: string; unsure: boolean; gender: string; tops: string; bottoms: string; shoes: string; wants: string[]; needs: string[]; faves: string[]; giftCards: GiftCard[]; notes: string };
-const blank = (key = "k0"): Kid => ({ key, name: "", age: "", unsure: false, gender: "", tops: "", bottoms: "", shoes: "", wants: [""], needs: [""], faves: [""], giftCards: [{ store: "", amount: 25 }], notes: "" });
+const blank = (key = "k0"): Kid => ({ key, name: "", age: "", unsure: false, gender: "", tops: "", bottoms: "", shoes: "", wants: [], needs: [], faves: [], giftCards: [], notes: "" });
 
 type Result = { familyId: string; parentName: string; childCount: number; merged: boolean; skipped: string[]; children: { id: string; name: string; decision: string; reason: string | null }[] };
 
@@ -100,11 +100,9 @@ export default function HouseholdForm({ maxAge, confirmed }: { maxAge: number; c
             <SizeField kind="pants" value={k.bottoms} onChange={(bottoms) => setKid(k.key, { bottoms })} />
             <SizeField kind="shoes" value={k.shoes} onChange={(shoes) => setKid(k.key, { shoes })} />
           </div>
-          <div className="two">
+          <div className="two child-gift-fields">
             <ItemListEditor kind="wants" items={k.wants} onChange={(wants) => setKid(k.key, { wants })} disabled={busy} />
             <ItemListEditor kind="needs" items={k.needs} onChange={(needs) => setKid(k.key, { needs })} disabled={busy} />
-          </div>
-          <div className="two">
             <ItemListEditor kind="interests" items={k.faves} onChange={(faves) => setKid(k.key, { faves })} disabled={busy} />
             <GiftCardEditor cards={k.giftCards} onChange={(giftCards) => setKid(k.key, { giftCards })} disabled={busy} />
           </div>

@@ -112,9 +112,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .age-caption { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .age-caption .check { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
 .age-caption .check input { margin: 0; }
-.item-list-editor { min-width: 0; align-content: start; }
-.item-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
-.gift-card-row { display: grid; grid-template-columns: minmax(0, 1fr) 76px auto; align-items: center; gap: 8px; }
+.child-gift-fields { margin-block: 4px 16px; }
+.item-list-editor { min-width: 0; align-content: start; gap: 8px; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--frost); }
+.item-editor-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; }
+.item-row, .gift-card-row { display: grid; align-items: center; gap: 6px; grid-template-columns: minmax(0, 1fr) auto; }
+.gift-card-row { grid-template-columns: minmax(0, 1fr) 68px auto; }
+.item-add, .item-remove { border: 0; background: transparent; color: var(--cran-deep); cursor: pointer; }
+.item-add { font-size: .8rem; font-weight: 700; padding: 5px 2px; }
+.item-add:hover { text-decoration: underline; }
+.item-remove { width: 32px; height: 32px; border-radius: 50%; font-size: 1.35rem; line-height: 1; }
+.item-remove:hover { background: var(--cran-soft); }
+.item-add:disabled, .item-remove:disabled { opacity: .5; cursor: not-allowed; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .check { display: flex; gap: 10px; align-items: flex-start; font-size: .88rem; margin-bottom: 10px; }
@@ -170,6 +178,8 @@ tr:last-child td { border-bottom: 0; }
 .kpis { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 18px; }
 .kpis > .kpi { flex: 1 1 132px; max-width: 235px; }
 .kpi { display: grid; align-content: center; gap: 4px; text-align: center; background: #fff; border: 2px solid var(--line); border-radius: 16px; padding: 12px; min-width: 0; }
+.overview-kpis .kpi { align-content: start; grid-template-rows: auto auto auto; }
+.overview-kpis .kpi small { min-height: 2.6em; line-height: 1.3; align-self: end; }
 a.kpi, button.kpi { color: inherit; text-decoration: none; cursor: pointer; }
 :is(a.kpi, button.kpi, .donation-purpose):is(:hover, :focus-visible),
 button.kpi[aria-pressed="true"] { border-color: var(--pine); background: var(--pine-soft); }
