@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { DECISION_LABEL } from "@/lib/campaign/rules";
 import type { Decision } from "@/lib/types";
@@ -14,6 +14,34 @@ const PAPER_SIZES = [
   { id: "legal", name: "US Legal (8.5 × 14 in)", width: 8.5, height: 14 },
   { id: "a4", name: "A4 (210 × 297 mm)", width: 210 / 25.4, height: 297 / 25.4 },
 ];
+
+type Design = "woven" | "candy" | "night" | "family";
+const DESIGNS: { id: Design; name: string; note: string }[] = [
+  { id: "woven", name: "Woven Festive", note: "Zigzag woven bands in cranberry, gold and green." },
+  { id: "candy", name: "Candy Cane & Holly", note: "Red and white candy-cane border with holly corners." },
+  { id: "night", name: "Gold Star Night", note: "Deep green with a gold frame and stars. Uses more ink." },
+  { id: "family", name: "Unique family color label", note: "Each family gets its own color; siblings match." },
+];
+/** Twelve colors that look different on paper and in print. Families past twelve start over; the last name is always printed. */
+const FAMILY_COLORS = ["#b01c3a", "#14573a", "#7a3fa0", "#d9822b", "#1f6fb2", "#0e8a8a", "#c2185b", "#6b7d1a", "#8b4a2b", "#4d4d9f", "#b98500", "#455a64"];
+const DESIGN_KEY = "angel-label-design";
+const SAMPLE = { family: "Fields", code: "G26-002", meta: "Girl · 16" };
+
+function Thumb({ design }: { design: Design }) {
+  return (
+    <div className="design-thumb" aria-hidden="true">
+      <div className={`lab d-${design}`} style={{ ["--f" as string]: FAMILY_COLORS[0], position: "relative", width: "2.6in", height: "1.3in" }}>
+        <div className="lab-band" />
+        <div className="lab-body">
+          <div className="n" style={{ fontSize: "21pt" }}>{SAMPLE.family}</div>
+          <div className="c" style={{ fontSize: "14pt" }}>{SAMPLE.code}</div>
+          <div className="m" style={{ fontSize: "8pt" }}>{SAMPLE.meta}</div>
+        </div>
+        <div className="lab-band" />
+      </div>
+    </div>
+  );
+}
 
 type NumberField = Exclude<keyof CustomLabelLayout, "cutGuides">;
 
@@ -38,6 +66,22 @@ export default function PrintClient({ items, savedStock }: { items: PrintItem[];
   const [layout, setLayout] = useState(initialLayout);
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
+  const [design, setDesign] = useState<Design>("woven");
+  useEffect(() => {
+    try {
+      const v = window.localStorage.getItem(DESIGN_KEY);
+      if (v === "woven" || v === "candy" || v === "night" || v === "family") setDesign(v);
+    } catch { /* a blocked browser store just means the default design */ }
+  }, []);
+  const pickDesign = (d: Design) => {
+    setDesign(d);
+    try { window.localStorage.setItem(DESIGN_KEY, d); } catch { /* not remembered, still works */ }
+  };
+  // One stable color per family, in a fixed order, so reprinting a family always gives the same color.
+  const familyColor = useMemo(() => {
+    const ids = [...new Set(items.map((i) => i.familyId))].sort();
+    return new Map(ids.map((id, n) => [id, FAMILY_COLORS[n % FAMILY_COLORS.length]]));
+  }, [items]);
 
   const visible = useMemo(() => items.filter((i) => (filter === "tree" ? i.published : filter === "unpublished" ? printable(i) && !i.published : filter === "sponsored" ? i.published && i.status !== "available" : filter === "approved" ? printable(i) : filter === "review" ? !printable(i) : true) && [i.name, i.family, i.code].join(" ").toLowerCase().includes(search.trim().toLowerCase())), [items, filter, search]);
   const chosen = items.filter((i) => printable(i) && picked.has(i.id));
@@ -123,7 +167,22 @@ export default function PrintClient({ items, savedStock }: { items: PrintItem[];
           </div>
 
           <div className="panel">
-            <h3 style={{ marginBottom: 8 }}>2. Choose the paper</h3>
+            <h3 style={{ marginBottom: 4 }}>2. Choose the label design</h3>
+            <p className="muted" style={{ marginBottom: 10 }}>Last name on top, angel code on line 2. Printed in full color. Your choice is remembered on this device.</p>
+            <div className="design-picker" role="radiogroup" aria-label="Label design">
+              {DESIGNS.map((d) => (
+                <button key={d.id} type="button" role="radio" aria-checked={design === d.id} className="design-opt" onClick={() => pickDesign(d.id)}>
+                  <span className="design-name">{d.name}{design === d.id && <i>Selected</i>}</span>
+                  {d.id === "family" ? <span className="design-words">Unique family color label</span> : <Thumb design={d.id} />}
+                  <small>{d.note}</small>
+                </button>
+              ))}
+            </div>
+            {design === "family" && <p className="muted" style={{ marginTop: 8, fontSize: ".85rem" }}>Siblings share a color. With more than 12 families the colors start over, and every label still shows the last name.</p>}
+          </div>
+
+          <div className="panel">
+            <h3 style={{ marginBottom: 8 }}>3. Choose the paper</h3>
             <label className="check"><input type="radio" name="fmt" checked={format === "cardstock"} onChange={() => setFormat("cardstock")} /><span><b>US Letter cardstock, cut apart</b> (default): 10 cards per sheet with cut guides.</span></label>
             <label className="check"><input type="radio" name="fmt" checked={format === "labels"} onChange={() => setFormat("labels")} /><span><b>Avery label sheet</b></span></label>
             <label className="check"><input type="radio" name="fmt" checked={format === "custom"} onChange={() => setFormat("custom")} /><span><b>Custom layout</b></span></label>
@@ -165,7 +224,7 @@ export default function PrintClient({ items, savedStock }: { items: PrintItem[];
               </div>
             )}
             {saved.id !== "cardstock" && <div style={{ marginTop: 6 }}><button className="btn sm ghost" disabled={saving} onClick={() => saveStock(null).then((ok) => { if (ok) setFormat("cardstock"); })}>Go back to cardstock as the default</button></div>}
-            <h3 style={{ margin: "14px 0 6px" }}>3. Print</h3>
+            <h3 style={{ margin: "14px 0 6px" }}>4. Print</h3>
             <p className="muted" style={{ fontSize: ".85rem", marginBottom: 8 }}>Each label shows the angel code, the parent&apos;s last name, gender and age. In the print window choose <b>{format === "custom" && !stock ? "your paper size" : paperName}</b>, scale <b>100% / Actual size</b>, and margins <b>None</b>.</p>
             <button className="btn" disabled={!chosen.length || !stock} onClick={() => window.print()}>{!stock ? (format === "custom" ? "Adjust the custom layout to print" : "Choose a label stock to preview") : chosen.length ? `Print ${chosen.length} (${pages.length} sheet${pages.length === 1 ? "" : "s"})` : "Select angels to print"}</button>
             {msg && <div className="ok" role="status" style={{ marginTop: 8 }}>{msg}</div>}
@@ -176,13 +235,21 @@ export default function PrintClient({ items, savedStock }: { items: PrintItem[];
       </div>
 
       {stock?.page && <style>{`@media print { @page { size: ${stock.page.width}in ${stock.page.height}in; margin: 0; } }`}</style>}
+      {design === "family" && chosen.length > 0 && (
+        <div className="no-print family-legend" aria-label="Family colors">
+          {[...new Map(chosen.map((i) => [i.familyId, i])).values()].map((i) => (
+            <span key={i.familyId}><i style={{ background: familyColor.get(i.familyId) }} />{i.family || "Family"}</span>
+          ))}
+        </div>
+      )}
       <div className={stock?.page ? "preview custom-preview" : "preview"} aria-label="Print preview">
         {stock && pages.map((pg, n) => (
           <div className="sheet" key={n} aria-label={`Sheet ${n + 1}`} style={stock.page ? { width: `${stock.page.width}in`, height: `${stock.page.height}in` } : undefined}>
             {pg.map(({ item, left, top }) => {
               const f = sizes(stock);
               return (
-                <div key={item.id} className={`lab${stock.cutGuides ? " cut" : ""}`} style={{
+                <div key={item.id} className={`lab d-${design}${stock.cutGuides ? " cut" : ""}`} style={{
+                  ["--f" as string]: familyColor.get(item.familyId) ?? FAMILY_COLORS[0],
                   left: `${left}in`, top: `${top}in`, width: `${stock.w}in`, height: `${stock.h}in`,
                   ...(stock.page ? { padding: `${Math.min(0.08, stock.h * 0.05)}in ${Math.min(0.14, stock.w * 0.05)}in`, overflowWrap: "anywhere" } : {}),
                 }}>
