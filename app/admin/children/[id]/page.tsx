@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/Festive";
 import { Ornament } from "@/components/Ornament";
 import ChildEditor from "@/components/admin/ChildEditor";
-import StatusButtons from "@/components/admin/StatusButtons";
+import SponsorshipPanel from "@/components/admin/SponsorshipPanel";
 import { requireAdmin } from "@/lib/auth";
 import { allChildren } from "@/lib/data";
 import { onTree, pad } from "@/lib/child";
@@ -58,21 +58,8 @@ export default async function AdminChild({ params }: { params: { id: string } })
             )}
             {fam && <p className="muted" style={{ marginTop: 10, fontSize: ".8rem" }}>Received {new Date(fam.created_at).toLocaleDateString()}{fam.source_label ? ` from ${fam.source_label}` : ""}</p>}
           </div>
-          <div className="panel">
-            <h3 style={{ marginBottom: 10 }}>Sponsor and gifts</h3>
-            {c.sponsor ? (
-              <>
-                <p><b>{c.sponsor.name}</b></p>
-                <p>{c.sponsor.email}</p>
-                <p>{c.sponsor.phone || "No phone"}</p>
-                <p className="muted" style={{ marginTop: 6, fontSize: ".85rem" }}>Adopted {c.claimed_at ? new Date(c.claimed_at).toLocaleDateString() : ""}</p>
-              </>
-            ) : (
-              <p className="muted">No sponsor yet.</p>
-            )}
-            {readGiftCards(c).length > 0 && <div style={{ margin: "10px 0" }}><b>Gift cards ({c.gift_card_status === "none" ? "not pledged" : c.gift_card_status})</b><ul className="list">{readGiftCards(c).map((gift, i) => <li key={i}>${gift.amount} {gift.store}</li>)}</ul></div>}
-            <div style={{ marginTop: 12 }}><StatusButtons id={c.id} status={c.status} gift={c.gift_card_status} /></div>
-          </div>
+          <SponsorshipPanel id={c.id} status={c.status} gift={c.gift_card_status as "none" | "pledged" | "received"} sponsor={c.sponsor ? { name: c.sponsor.name, email: c.sponsor.email, phone: c.sponsor.phone, adopted: c.claimed_at ? new Date(c.claimed_at).toLocaleDateString() : null } : null} />
+          {readGiftCards(c).length > 0 && <div className="panel"><h3 style={{ marginBottom: 6 }}>Gift cards requested</h3><ul className="list">{readGiftCards(c).map((gift, i) => <li key={i}>${gift.amount} {gift.store}</li>)}</ul></div>}
         </div>
       </div>
     </SiteShell>
