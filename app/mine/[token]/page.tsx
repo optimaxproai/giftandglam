@@ -56,7 +56,7 @@ export default async function Mine({ params, searchParams }: { params: { token: 
                   {STATUS_ORDER.slice(1).map((s, i) => <i key={s} style={{ flex: 1, height: 6, borderRadius: 99, background: i < idx ? "var(--pine)" : "var(--line)" }} />)}
                 </div>
                 <SponsorChecklist token={params.token} items={gifts.filter(g=>g.child_id===c.id&&g.active)} editable={row.status==="claimed"||row.status==="purchased"} code={c.code} instructions={sponsorInstructions(c)}/>
-                <p className="muted">Sizes: Shirt {c.tops||"?"} · Pants {c.bottoms||"?"} · Shoes {c.shoes||"?"}</p>
+                <p className="muted">Sizes: Shirt {c.tops||"?"} · Pants {c.bottoms||"?"} · Coat {c.coat_size || "Not provided"} · Shoes {c.shoes||"?"}</p>
                 {c.siblings.some(s=>s.available) && (
                   <div className="muted" style={{ fontSize: ".84rem", textAlign: "center" }}>
                     Available siblings: {c.siblings.filter(s=>s.available).map(s=><form key={s.id} action={`/mine/${params.token}/resume`} method="post" style={{display:"inline-block",margin:4}}><input type="hidden" name="angel" value={s.firstName}/><button className="btn ghost sm">{s.firstName}</button></form>)}

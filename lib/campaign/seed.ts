@@ -1,7 +1,7 @@
 import type { Campaign } from "./service";
 
-const kid = (fullName: string, age: number | null, gender: "Girl" | "Boy" | "Other", wants: string[], needs: string[], extra: { ageUnsure?: boolean; faves?: string[]; tops?: string; shoes?: string } = {}) => ({
-  fullName, age, gender, wants, needs, faves: extra.faves ?? [], tops: extra.tops, shoes: extra.shoes, ageUnsure: extra.ageUnsure,
+const kid = (fullName: string, age: number | null, gender: "Girl" | "Boy" | "Other", wants: string[], needs: string[], extra: { ageUnsure?: boolean; faves?: string[]; tops?: string; coatSize?: string; shoes?: string } = {}) => ({
+  fullName, age, gender, wants, needs, faves: extra.faves ?? [], tops: extra.tops, coatSize: extra.coatSize, shoes: extra.shoes, ageUnsure: extra.ageUnsure,
 });
 
 /**
@@ -13,7 +13,7 @@ export async function seedCampaignReview(c: Campaign) {
   const by = "review-build";
   // 1. Approved. One child is published (the only angel on the tree); her brother is approved but not published yet.
   const a = await c.enterHousehold({ parentName: "Jordan Sample", phone: "555-0110", email: "jordan.sample@example.com", story: "Fictional review note: sample hardship text that only organizers can read.", source: "Fictional printed email", kids: [
-    kid("Casey Sample", 8, "Girl", ["Art easel set", "LEGO Classic bricks", "Illustrated animal encyclopedia", "Light-up sneakers"], ["Winter coat", "Socks (6 pack)", "Pajamas"], { faves: ["Drawing", "Animals"], tops: "Youth M", shoes: "1" }),
+    kid("Casey Sample", 8, "Girl", ["Art easel set", "LEGO Classic bricks", "Illustrated animal encyclopedia", "Light-up sneakers"], ["Winter coat", "Socks (6 pack)", "Pajamas"], { faves: ["Drawing", "Animals"], tops: "Youth M", coatSize: "Youth L", shoes: "1" }),
     kid("Drew Sample", 6, "Boy", ["Dinosaur set", "Hot Wheels track"], ["Rain boots", "Underwear"], { faves: ["Dinosaurs"] }),
   ] }, by);
   for (const k of a.children) await c.decide(k.id, "approved", { by });

@@ -14,7 +14,7 @@ const Kid = z.object({
   age: z.number().int().min(0).max(120).nullable(),
   ageUnsure: z.boolean().optional(),
   gender: z.enum(["Girl", "Boy", "Other"]).nullable(),
-  tops: z.string().max(60).optional(), bottoms: z.string().max(60).optional(), shoes: z.string().max(60).optional(),
+  coatSize: z.string().max(60).optional(), tops: z.string().max(60).optional(), bottoms: z.string().max(60).optional(), shoes: z.string().max(60).optional(),
   wants: lines, needs: lines, faves: lines.refine((a) => a.length <= 3, "At most 3 interests"),
   favColor: z.string().max(60).optional(), giftStore: z.string().max(80).optional(), giftAmount: z.number().int().min(5).max(200).optional(),
   giftCards: GiftCardsSchema.optional(),

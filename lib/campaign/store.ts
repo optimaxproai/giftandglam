@@ -13,7 +13,7 @@ export type Settings = { maxAge: number; maxAgeConfirmed: boolean; labelStock: L
 export type NewFamily = { parent_name: string; phone: string | null; email: string | null; story: string | null; source_label: string | null };
 export type NewKid = Pick<
   ChildRow,
-  "full_name" | "first_name" | "age" | "age_uncertain" | "gender" | "tops" | "bottoms" | "shoes" | "wants" | "needs" | "faves" | "fav_color" | "gift_store" | "gift_amount" | "gift_cards" | "decision" | "decision_reason" | "set_aside_code" | "organizer_notes"
+  "full_name" | "first_name" | "age" | "age_uncertain" | "gender" | "tops" | "coat_size" | "bottoms" | "shoes" | "wants" | "needs" | "faves" | "fav_color" | "gift_store" | "gift_amount" | "gift_cards" | "decision" | "decision_reason" | "set_aside_code" | "organizer_notes"
 >;
 
 export class CampaignError extends Error {

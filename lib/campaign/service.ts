@@ -11,6 +11,7 @@ export type KidInput = {
   ageUnsure?: boolean;
   gender: "Girl" | "Boy" | "Other" | null;
   tops?: string;
+  coatSize?: string;
   bottoms?: string;
   shoes?: string;
   wants: string[];
@@ -68,6 +69,7 @@ export function createCampaign(store: CampaignStore) {
         age_uncertain: k.age != null && !!k.ageUnsure,
         gender: k.gender,
         tops: clean(k.tops) || null,
+        coat_size: clean(k.coatSize) || null,
         bottoms: clean(k.bottoms) || null,
         shoes: clean(k.shoes) || null,
         wants: k.wants.map(clean).filter(Boolean),

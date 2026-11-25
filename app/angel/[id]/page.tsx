@@ -42,6 +42,7 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
             </div>
           </div>
           <div className="facts">
+            {c.coat_size && <div className="fact"><small>Coat</small>{c.coat_size}</div>}
             {c.tops && <div className="fact"><small>Shirt</small>{c.tops}</div>}
             {c.bottoms && <div className="fact"><small>Pants</small>{c.bottoms}</div>}
             {c.shoes && <div className="fact"><small>Shoes</small>{c.shoes}</div>}

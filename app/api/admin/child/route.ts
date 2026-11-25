@@ -19,7 +19,7 @@ const Patch = z
     full_name: z.string().trim().min(1).max(160),
     age: z.number().int().min(0).max(120).nullable(),
     gender: z.enum(["Girl", "Boy", "Other"]).nullable(),
-    tops: str, bottoms: str, shoes: str,
+    tops: str, coat_size: z.string().trim().max(60).nullable(), bottoms: str, shoes: str,
     wants: list, needs: list,
     faves: list.refine((a) => a.length <= 3, "At most 3 favorites"),
     fav_color: str, gift_store: str,

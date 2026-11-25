@@ -25,6 +25,7 @@ export type ChildRow = {
   age: number | null;
   gender: string | null;
   tops: string | null;
+  coat_size?: string | null;
   bottoms: string | null;
   shoes: string | null;
   wants: string[];
@@ -63,6 +64,7 @@ export type PublicChild = {
   age: number | null;
   gender: string | null;
   tops: string | null;
+  coat_size?: string | null;
   bottoms: string | null;
   shoes: string | null;
   wants: string[];

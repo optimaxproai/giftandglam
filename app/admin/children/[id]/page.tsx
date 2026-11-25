@@ -35,7 +35,7 @@ export default async function AdminChild({ params }: { params: { id: string } })
       </div>
       <div className="cols">
         <ChildEditor
-          child={{ id: c.id, fullName: c.full_name, age: c.age, gender: c.gender, tops: c.tops || "", bottoms: c.bottoms || "", shoes: c.shoes || "", wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.fav_color || "", giftCards: readGiftCards(c), photo: !!c.photo_path, photoPublic: c.photo_public, approved: c.approved, notes: c.organizer_notes || "" }}
+          child={{ id: c.id, fullName: c.full_name, age: c.age, gender: c.gender, tops: c.tops || "", coatSize: c.coat_size || "", bottoms: c.bottoms || "", shoes: c.shoes || "", wants: c.wants, needs: c.needs, faves: c.faves, favColor: c.fav_color || "", giftCards: readGiftCards(c), photo: !!c.photo_path, photoPublic: c.photo_public, approved: c.approved, notes: c.organizer_notes || "" }}
           family={{ parentName: fam?.parent_name || "", phone: fam?.phone || "", email: fam?.email || "", story: fam?.story || "" }}
         />
         <div style={{ display: "grid", gap: 16 }}>

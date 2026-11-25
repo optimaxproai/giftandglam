@@ -14,6 +14,7 @@ export type EditChild = {
   age: number | null;
   gender: string | null;
   tops: string;
+  coatSize: string;
   bottoms: string;
   shoes: string;
   wants: string[];
@@ -53,6 +54,7 @@ export default function ChildEditor({ child, family }: { child: EditChild; famil
         age: c.age === child.age ? undefined : c.age,
         gender: c.gender || null,
         tops: c.tops || null,
+        coat_size: c.coatSize || null,
         bottoms: c.bottoms || null,
         shoes: c.shoes || null,
         wants: cleanListItems(c.wants),
@@ -106,8 +108,9 @@ export default function ChildEditor({ child, family }: { child: EditChild; famil
           <div className="field"><label className="lbl" htmlFor="ag">Age</label><input id="ag" type="number" min={0} max={21} value={c.age ?? ""} onChange={(e) => set({ age: e.target.value === "" ? null : Number(e.target.value) })} /></div>
           <div className="field"><label className="lbl" htmlFor="gd">Gender</label><select id="gd" value={c.gender || ""} onChange={(e) => set({ gender: e.target.value })}><option value="">Not stated</option><option>Girl</option><option>Boy</option><option>Other</option></select></div>
         </div>
-        <div className="three aligned-fields">
+        <div className="size-fields aligned-fields">
           <SizeField kind="shirt" value={c.tops} onChange={(tops) => set({ tops })} />
+          <SizeField kind="coat" value={c.coatSize} onChange={(coatSize) => set({ coatSize })} />
           <SizeField kind="pants" value={c.bottoms} onChange={(bottoms) => set({ bottoms })} />
           <SizeField kind="shoes" value={c.shoes} onChange={(shoes) => set({ shoes })} />
         </div>

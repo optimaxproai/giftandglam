@@ -17,6 +17,7 @@ type Kid = {
   ageUnsure:boolean;
   gender: string;
   tops: string;
+  coatSize: string;
   bottoms: string;
   shoes: string;
   wants: string[];
@@ -112,6 +113,7 @@ function toKid(c: DraftFamily["children"][number], canvases: HTMLCanvasElement[]
     ageUnsure:!!c.ageUnsure,
     gender: c.gender || "",
     tops: c.tops,
+    coatSize: c.coatSize ?? "",
     bottoms: c.bottoms,
     shoes: c.shoes,
     wants: c.wants,
@@ -228,6 +230,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
           ageUnsure:k.ageUnsure,
           gender: k.gender || null,
           tops: k.tops,
+          coatSize: k.coatSize,
           bottoms: k.bottoms,
           shoes: k.shoes,
           wants: cleanListItems(k.wants),
@@ -314,8 +317,9 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
                   <div className="field"><label className="lbl">Age <span style={{marginLeft:8}}><input type="checkbox" checked={k.ageUnsure} onChange={e=>setKid(f.key,k.key,{ageUnsure:e.target.checked})}/> Unclear</span></label><input type="number" min={0} max={120} value={k.age} onChange={(e) => setKid(f.key, k.key, { age: e.target.value })} /></div>
                   <div className="field"><label className="lbl">Gender</label><select value={k.gender} onChange={(e) => setKid(f.key, k.key, { gender: e.target.value })}><option value="">Not stated</option><option>Girl</option><option>Boy</option><option>Other</option></select></div>
                 </div>
-                <div className="three aligned-fields">
+                <div className="size-fields aligned-fields">
                   <SizeField kind="shirt" value={k.tops} onChange={(tops) => setKid(f.key, k.key, { tops })} />
+                  <SizeField kind="coat" value={k.coatSize} onChange={(coatSize) => setKid(f.key, k.key, { coatSize })} />
                   <SizeField kind="pants" value={k.bottoms} onChange={(bottoms) => setKid(f.key, k.key, { bottoms })} />
                   <SizeField kind="shoes" value={k.shoes} onChange={(shoes) => setKid(f.key, k.key, { shoes })} />
                 </div>

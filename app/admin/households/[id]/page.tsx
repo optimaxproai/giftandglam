@@ -17,7 +17,7 @@ export default async function HouseholdPage({ params }: { params: { id: string }
   const kids: PChild[] = h.children.map((k) => ({
     id: k.id, name: k.full_name, code: k.angel_code, age: k.age, ageUnsure: k.age_uncertain, ageFlag: ageFlag(k, maxAge), gender: k.gender,
     decision: k.decision, decisionLabel: DECISION_LABEL[k.decision], pill: DECISION_PILL[k.decision], reason: k.decision_reason, published: k.approved,
-    wants: k.wants, needs: k.needs, sizes: [k.tops && `shirt ${k.tops}`, k.bottoms && `pants ${k.bottoms}`, k.shoes && `shoes ${k.shoes}`].filter(Boolean).join(", "), status: k.status,
+    wants: k.wants, needs: k.needs, sizes: [k.tops && `shirt ${k.tops}`, k.coat_size && `coat ${k.coat_size}`, k.bottoms && `pants ${k.bottoms}`, k.shoes && `shoes ${k.shoes}`].filter(Boolean).join(", "), status: k.status,
   }));
   return (
     <SiteShell admin>

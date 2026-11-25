@@ -6,8 +6,8 @@ import SizeField from "./SizeField";
 import GiftCardEditor from "./GiftCardEditor";
 import { cleanGiftCards, type GiftCard } from "@/lib/giftCards";
 
-type Kid = { key: string; name: string; age: string; unsure: boolean; gender: string; tops: string; bottoms: string; shoes: string; wants: string[]; needs: string[]; faves: string[]; giftCards: GiftCard[]; notes: string };
-const blank = (key = "k0"): Kid => ({ key, name: "", age: "", unsure: false, gender: "", tops: "", bottoms: "", shoes: "", wants: [], needs: [], faves: [], giftCards: [], notes: "" });
+type Kid = { key: string; name: string; age: string; unsure: boolean; gender: string; tops: string; coatSize: string; bottoms: string; shoes: string; wants: string[]; needs: string[]; faves: string[]; giftCards: GiftCard[]; notes: string };
+const blank = (key = "k0"): Kid => ({ key, name: "", age: "", unsure: false, gender: "", tops: "", coatSize: "", bottoms: "", shoes: "", wants: [], needs: [], faves: [], giftCards: [], notes: "" });
 
 type Result = { familyId: string; parentName: string; childCount: number; merged: boolean; skipped: string[]; children: { id: string; name: string; decision: string; reason: string | null }[] };
 
@@ -40,7 +40,7 @@ export default function HouseholdForm({ maxAge, confirmed }: { maxAge: number; c
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         action: "enter", parentName: parent.name, phone: parent.phone, email: parent.email, story: parent.story, source: "Printed email",
-        kids: kids.map((k) => ({ fullName: k.name, age: k.age.trim() === "" ? null : Number(k.age), ageUnsure: k.unsure, gender: k.gender || null, tops: k.tops, bottoms: k.bottoms, shoes: k.shoes, wants: cleanListItems(k.wants), needs: cleanListItems(k.needs), faves: cleanListItems(k.faves), giftCards: cleanGiftCards(k.giftCards), notes: k.notes })),
+        kids: kids.map((k) => ({ fullName: k.name, age: k.age.trim() === "" ? null : Number(k.age), ageUnsure: k.unsure, gender: k.gender || null, tops: k.tops, coatSize: k.coatSize, bottoms: k.bottoms, shoes: k.shoes, wants: cleanListItems(k.wants), needs: cleanListItems(k.needs), faves: cleanListItems(k.faves), giftCards: cleanGiftCards(k.giftCards), notes: k.notes })),
       }),
     });
     const j = await res.json().catch(() => ({}));
@@ -95,8 +95,9 @@ export default function HouseholdForm({ maxAge, confirmed }: { maxAge: number; c
             <div className="field"><div className="age-caption"><label className="lbl" htmlFor={`a${k.key}`}>Age</label><label className="check"><input type="checkbox" checked={k.unsure} onChange={(e) => setKid(k.key, { unsure: e.target.checked })} /><span>Unclear age</span></label></div><input id={`a${k.key}`} inputMode="numeric" value={k.age} onChange={(e) => setKid(k.key, { age: e.target.value })} placeholder="blank if not stated" /></div>
             <div className="field"><label htmlFor={`g${k.key}`}>Gender</label><select id={`g${k.key}`} value={k.gender} onChange={(e) => setKid(k.key, { gender: e.target.value })}><option value="">Not stated</option><option>Girl</option><option>Boy</option><option>Other</option></select></div>
           </div>
-          <div className="three aligned-fields">
+          <div className="size-fields aligned-fields">
             <SizeField kind="shirt" value={k.tops} onChange={(tops) => setKid(k.key, { tops })} />
+            <SizeField kind="coat" value={k.coatSize} onChange={(coatSize) => setKid(k.key, { coatSize })} />
             <SizeField kind="pants" value={k.bottoms} onChange={(bottoms) => setKid(k.key, { bottoms })} />
             <SizeField kind="shoes" value={k.shoes} onChange={(shoes) => setKid(k.key, { shoes })} />
           </div>
