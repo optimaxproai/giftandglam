@@ -251,3 +251,8 @@ button.kpi[aria-pressed="true"] { border-color: var(--pine); background: var(--p
   .sheet { box-shadow: none !important; margin: 0 !important; page-break-after: always; break-after: page; }
   .sheet:last-child { page-break-after: auto; break-after: auto; }
 }
+
+.tabs a.active { color: var(--ink); border-bottom-color: var(--cran); }
+.child-gift-detail > td { background: var(--frost); padding: 16px; }
+.child-gift-detail h3 { margin-bottom: 8px; }
+.child-gift-detail table { margin-top: 12px; }

@@ -41,14 +41,14 @@ export default function HouseholdPanel({ family, kids, maxAge }: { family: PFami
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <div className="panel private">
-        <h3 style={{ marginBottom: 10 }}>Household</h3>
+        <h3 style={{ marginBottom: 10 }}>Family</h3>
         <div className="three aligned-fields">
           <div className="field"><label className="lbl" htmlFor="fp">Parent or guardian</label><input id="fp" value={fam.parentName} onChange={(e) => setFam({ ...fam, parentName: e.target.value })} /></div>
           <div className="field"><label className="lbl" htmlFor="fph">Phone</label><input id="fph" value={fam.phone} onChange={(e) => setFam({ ...fam, phone: e.target.value })} /></div>
           <div className="field"><label className="lbl" htmlFor="fe">Email</label><input id="fe" value={fam.email} onChange={(e) => setFam({ ...fam, email: e.target.value })} /></div>
         </div>
         <div className="field"><label className="lbl" htmlFor="fs">Story (private)</label><textarea id="fs" style={{ minHeight: 64 }} value={fam.story} onChange={(e) => setFam({ ...fam, story: e.target.value })} /></div>
-        <button className="btn sm ghost" disabled={busy} onClick={() => run({ action: "update_household", familyId: fam.id, parentName: fam.parentName, phone: fam.phone, email: fam.email, story: fam.story }, "Household saved.")}>Save household</button>
+        <button className="btn sm ghost" disabled={busy} onClick={() => run({ action: "update_household", familyId: fam.id, parentName: fam.parentName, phone: fam.phone, email: fam.email, story: fam.story }, "Family saved.")}>Save family</button>
       </div>
 
       {kids.map((k) => {

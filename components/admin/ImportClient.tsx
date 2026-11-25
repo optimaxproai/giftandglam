@@ -248,7 +248,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
     setFam(f.key, {
       state: "saved",
       familyId: j.familyId,
-      msg: `${made || "Nothing new"} saved to Households for review${j.merged ? ", joined an existing family" : ""}${j.skipped?.length ? `. Skipped duplicates: ${j.skipped.join(", ")}` : ""}.`,
+      msg: `${made || "Nothing new"} saved to Families for review${j.merged ? ", joined an existing family" : ""}${j.skipped?.length ? `. Skipped duplicates: ${j.skipped.join(", ")}` : ""}.`,
     });
   }
 
@@ -331,7 +331,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
           ))}
 
           <div style={{ borderTop: "2px dotted var(--line)", marginTop: 14, paddingTop: 12 }}>
-            <p className="muted" style={{ fontSize: ".86rem", marginBottom: 8 }}>Children are saved as <b>Needs review</b>. The season age limit is applied automatically; approve and publish them from Households. Photos stay with organizers.</p>
+            <p className="muted" style={{ fontSize: ".86rem", marginBottom: 8 }}>Children are saved as <b>Needs review</b>. The season age limit is applied automatically; approve and publish them from Families. Photos stay with organizers.</p>
             {f.msg && <div className={f.state === "saved" ? "ok" : "err"} role="status">{f.msg}</div>}
             <div className="acts">
               <button className="btn" onClick={() => save(f)} disabled={f.state === "saving" || f.state === "saved"}>{f.state === "saved" ? "Saved" : "Save family"}</button>

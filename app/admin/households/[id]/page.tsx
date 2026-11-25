@@ -23,7 +23,7 @@ export default async function HouseholdPage({ params }: { params: { id: string }
     <SiteShell admin>
       <div className="page-h">
         <div>
-          <Link href="/admin/households" className="btn ghost sm">← Households</Link>
+          <Link href="/admin/households" className="btn ghost sm">← Families</Link>
           <h2 style={{ marginTop: 10 }}>{h.family.parent_name}</h2>
           <p className="muted">{h.children.length} child{h.children.length === 1 ? "" : "ren"} · {h.family.source_label || "Printed email"} · season age limit {maxAge}</p>
         </div>

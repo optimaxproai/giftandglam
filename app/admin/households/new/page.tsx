@@ -13,7 +13,7 @@ export default async function NewHousehold() {
     <SiteShell admin>
       <div className="page-h">
         <div>
-          <Link href="/admin/households" className="btn ghost sm">← Households</Link>
+          <Link href="/admin/households" className="btn ghost sm">← Families</Link>
         </div>
       </div>
       <HouseholdForm maxAge={s.maxAge} confirmed={s.maxAgeConfirmed} />

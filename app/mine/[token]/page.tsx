@@ -28,7 +28,7 @@ export default async function Mine({ params, searchParams }: { params: { token: 
       <div className="page-h">
         <div>
           <h2>My Angels</h2>
-          <p className="muted">Hello {sponsor.name.split(" ")[0]}. Return gifts unwrapped by <b>{DRIVE.returnByLabel}</b>{dl >= 0 ? ` (${dl} days left)` : ""}.</p>
+          <p className="muted">{sponsor.name === "Anonymous sponsor" ? "Thank you for sponsoring." : `Hello ${sponsor.name.split(" ")[0]}.`} Return gifts unwrapped by <b>{DRIVE.returnByLabel}</b>{dl >= 0 ? ` (${dl} days left)` : ""}.</p>
         </div>
         <form action={`/mine/${params.token}/resume`} method="post">
           <button type="submit" className="btn ghost sm">Adopt Another Angel</button>

@@ -100,7 +100,7 @@ export default function ChildEditor({ child, family }: { child: EditChild; famil
             {c.photo && <button className="btn ghost sm" onClick={removePhoto}>Remove photo</button>}
           </div>
         </div>
-        <p className="muted" style={{ fontSize: ".85rem", marginBottom: 10 }}>Photos are only ever shown to organizers. Decisions and publishing are on the household page.</p>
+        <p className="muted" style={{ fontSize: ".85rem", marginBottom: 10 }}>Photos are only ever shown to organizers. Decisions and publishing are on the family page.</p>
         <div className="three aligned-fields">
           <div className="field"><label className="lbl" htmlFor="fn">Full name (private)</label><input id="fn" value={c.fullName} onChange={(e) => set({ fullName: e.target.value })} /></div>
           <div className="field"><label className="lbl" htmlFor="ag">Age</label><input id="ag" type="number" min={0} max={21} value={c.age ?? ""} onChange={(e) => set({ age: e.target.value === "" ? null : Number(e.target.value) })} /></div>

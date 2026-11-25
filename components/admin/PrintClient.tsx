@@ -106,7 +106,7 @@ export default function PrintClient({ items, savedStock }: { items: PrintItem[];
               <button className="btn sm ghost" onClick={() => setPicked(new Set())}>Clear</button>
             </div>
             <div className="field"><input type="search" aria-label="Search angels" placeholder="Search child, parent or code" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-            {visible.length === 0 ? <p className="muted">{items.length ? "No matching requests." : "Enter a household to get started."}</p> : (
+            {visible.length === 0 ? <p className="muted">{items.length ? "No matching requests." : "Add a family to get started."}</p> : (
               <div className="tw" style={{ maxHeight: 360, overflowY: "auto" }}>
                 <table>
                   <thead><tr><th></th><th>Angel / child</th><th>Parent</th><th>Gender</th><th>Age</th><th>Status</th></tr></thead>
