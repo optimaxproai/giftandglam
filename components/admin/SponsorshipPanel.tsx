@@ -9,11 +9,11 @@ type Sponsor = { name: string; email: string; phone: string | null; adopted: str
 const STEPS: { status: Exclude<Status, "available">; title: string; detail: string }[] = [
   { status: "claimed", title: "Sponsored", detail: "A sponsor has adopted this angel." },
   { status: "purchased", title: "Shopping complete", detail: "The sponsor says they are done shopping." },
-  { status: "returned", title: "Gifts returned", detail: "You checked the gifts in at drop-off (due Dec 10)." },
+  { status: "returned", title: "Gifts checked-in", detail: "You checked the gifts in at drop-off (due Dec 10)." },
   { status: "given", title: "Given out", detail: "Handed to the family at the giveaway (Dec 12)." },
 ];
 const ORDER: Status[] = ["available", "claimed", "purchased", "returned", "given"];
-const LABEL: Record<Status, string> = { available: "Available", claimed: "Sponsored", purchased: "Shopping complete", returned: "Gifts returned", given: "Given out" };
+const LABEL: Record<Status, string> = { available: "Available", claimed: "Sponsored", purchased: "Shopping complete", returned: "Gifts checked-in", given: "Given out" };
 
 /** Sponsorship and gift progress as switches. Turning a step on turns on the steps before it; turning it off turns off the steps after it. */
 export default function SponsorshipPanel({ id, status, gift, sponsor }: { id: string; status: Status; gift: Gift; sponsor: Sponsor }) {
