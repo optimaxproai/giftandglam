@@ -87,7 +87,7 @@ export function SiteShell({ children, hero, admin = false }: { children: ReactNo
                         <Link href="/admin/print">Print Gift Labels</Link>
                       </div>
                     </details>
-                    <Link href="/admin/account">Account</Link>
+                    <Link href="/admin/account">Settings</Link>
                   </div>
                   <Link href="/">View tree</Link>
                 </>

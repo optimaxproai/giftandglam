@@ -46,7 +46,7 @@ export default function TreeToggle({ childId, on, canPublish }: { childId: strin
       >
         <i aria-hidden="true" />
       </button>
-      <span className="tree-toggle-label">{value ? "Yes" : blocked ? "No · approve first" : "No"}</span>
+      <span className="tree-toggle-label">{value ? "Yes" : "No"}</span>
       {err && <span className="err" role="alert" style={{ display: "block" }}>{err}</span>}
     </span>
   );

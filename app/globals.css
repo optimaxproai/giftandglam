@@ -318,3 +318,9 @@ button.kpi[aria-pressed="true"] { border-color: var(--pine); background: var(--p
 .lab-body::before { content: ""; position: absolute; inset: .05in .07in; border: .02in solid #e6b440; border-radius: .08in; pointer-events: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .lab .c::before, .lab .c::after { content: "\2726"; color: #e6b440; font-size: .7em; margin: 0 .35em; vertical-align: .08em; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 @media print { .lab, .lab-band, .lab-body::before, .lab .c::before, .lab .c::after { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+.cols.overview-cols { grid-template-columns: minmax(300px, .75fr) minmax(0, 1.25fr); align-items: stretch; }
+.cols.overview-cols > .panel { height: 100%; }
+.overview-cols .panel li { text-wrap: pretty; }
+@media (max-width: 760px) { .cols.overview-cols { grid-template-columns: 1fr; } }
+tr.fam-first > td { border-top: 2px solid var(--line); }

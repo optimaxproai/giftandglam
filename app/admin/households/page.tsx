@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SiteShell } from "@/components/Festive";
 import ResetCampaign from "@/components/admin/ResetCampaign";
-import SettingsBar from "@/components/admin/SettingsBar";
+import TreeToggle from "@/components/admin/TreeToggle";
 import { requireAdmin } from "@/lib/auth";
 import { getCampaign } from "@/lib/campaign";
 import { ageFlag, DECISION_LABEL, DECISION_PILL, type HouseholdState } from "@/lib/campaign/rules";
@@ -28,7 +28,6 @@ export default async function Households({ searchParams }: { searchParams: { sta
         <div className="acts">{reviewMode() && <ResetCampaign />}<Link className="btn" href="/admin/households/new">+ Add a family</Link></div>
       </div>
       <p className="muted" style={{ marginBottom: 16 }}>Enter each printed email as one family, record a decision for every child, then publish approved angels.</p>
-      <SettingsBar maxAge={maxAge} confirmed={s.settings.maxAgeConfirmed} />
       <nav className="tabs" aria-label="Filter">
         {TABS.map(([k, label]) => (
           <Link key={k} href={`/admin/households?${new URLSearchParams({ ...(k ? { state: k } : {}), ...(query ? { q: query } : {}) })}`} style={state === k ? { color: "var(--ink)", borderBottomColor: "var(--cran)" } : undefined}>
@@ -47,32 +46,28 @@ export default async function Households({ searchParams }: { searchParams: { sta
       ) : (
         <div className="tw">
           <table>
-            <thead><tr><th>Parent or guardian</th><th>Contact</th><th>Children</th><th>Status</th><th>On tree</th><th></th></tr></thead>
+            <thead><tr><th>Parent or guardian</th><th>Contact</th><th>Child</th><th>Decision</th><th>Flags</th><th>On the tree</th></tr></thead>
             <tbody>
-              {list.map((h) => (
-                <tr key={h.family.id}>
-                  <td><b>{h.family.parent_name}</b></td>
-                  <td>{h.family.phone || "—"}<br /><span className="muted">{h.family.email || ""}</span></td>
-                  <td>{h.children.length}</td>
-                  <td>
-                    <div style={{ display: "grid", gap: 4 }}>
-                      {h.children.map((k) => {
-                        const f = ageFlag(k, maxAge);
-                        return (
-                          <div key={k.id}>
-                            {k.first_name} <span className="muted">({k.age ?? "no age"})</span> <span className={`pill ${DECISION_PILL[k.decision]}`}>{DECISION_LABEL[k.decision]}</span>
-                            {k.approved && <> <span className="pill available">On the tree</span></>}
-                            {f && k.decision !== "set_aside" && <> <span className="pill late">{FLAG[f]}</span></>}
-                            {k.decision === "set_aside" && k.decision_reason && <div className="muted" style={{ fontSize: ".8rem" }}>{k.decision_reason}</div>}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </td>
-                  <td>{h.children.filter((k) => k.approved).length} / {h.children.length}</td>
-                  <td><Link className="btn sm" href={`/admin/households/${h.family.id}`}>Open</Link></td>
-                </tr>
-              ))}
+              {list.map((h) => h.children.map((k, i) => {
+                const f = ageFlag(k, maxAge);
+                return (
+                  <tr key={k.id} className={i === 0 ? "fam-first" : undefined}>
+                    {i === 0 && (
+                      <>
+                        <td rowSpan={h.children.length}><Link href={`/admin/households/${h.family.id}`}><b>{h.family.parent_name}</b></Link></td>
+                        <td rowSpan={h.children.length}>{h.family.phone || "—"}<br /><span className="muted">{h.family.email || ""}</span></td>
+                      </>
+                    )}
+                    <td>{k.first_name} <span className="muted">({k.age ?? "no age"})</span></td>
+                    <td><span className={`pill ${DECISION_PILL[k.decision]}`}>{DECISION_LABEL[k.decision]}</span></td>
+                    <td>
+                      {f && k.decision !== "set_aside" ? <span className="pill late">{FLAG[f]}</span> : <span className="muted">—</span>}
+                      {k.decision === "set_aside" && k.decision_reason && <div className="muted" style={{ fontSize: ".8rem" }}>{k.decision_reason}</div>}
+                    </td>
+                    <td><TreeToggle childId={k.id} on={k.approved} canPublish={k.decision === "approved" && !!k.angel_code} /></td>
+                  </tr>
+                );
+              }))}
             </tbody>
           </table>
         </div>
