@@ -141,6 +141,7 @@ export function parseHouseholdCsv(input: string): DraftFamily[] {
     const householdId = get("householdId");
     const emailKey = normEmail(email);
     const phoneKey = normPhone(phone);
+    // Older spreadsheets can still supply an explicit grouping key.
     const key = householdId ? `id:${householdId}` : emailKey ? `email:${emailKey}` : phoneKey ? `phone:${phoneKey}` : `row:${line}`;
     const family = families.get(key) ?? { parentName, email, phone, story, source:get("source"), children: [] };
     if (
@@ -148,7 +149,7 @@ export function parseHouseholdCsv(input: string): DraftFamily[] {
       || (family.email && emailKey && normEmail(family.email) !== emailKey)
       || (family.phone && phoneKey && normPhone(family.phone) !== phoneKey)
     ) {
-      throw new Error(`CSV line ${line} has different parent details for the same household. Check the household ID and contact information.`);
+      throw new Error(`CSV line ${line} has different parent details for the same household. Use the same parent or guardian name and contact details for siblings. Use separate family contact details for different households.`);
     }
     if (family.children.length >= 12) throw new Error(`CSV line ${line} adds a thirteenth child to one household. The organizer can save up to 12 at a time.`);
     family.email ||= email;

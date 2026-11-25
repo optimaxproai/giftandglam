@@ -265,7 +265,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
         <p className="muted" style={{ margin: "6px 0 14px" }}>CSV, PDF, screenshot, photo, or .txt / .eml. CSV is read in your browser without AI and saved only after review. Up to {MAX_PAGES} pages per PDF.</p>
         <button className="btn gold" onClick={() => input.current?.click()} disabled={!!busy}>Choose files</button>
         <input ref={input} type="file" multiple accept={demo?".csv,text/csv":".pdf,image/*,.txt,.eml,text/plain,.csv,text/csv"} hidden onChange={(e) => e.target.files && handleFiles(e.target.files)} />
-        <p style={{marginTop:10}}><a href="/household-import-template.csv" download>Download the full CSV template</a> · One row per child, same household ID for siblings. Separate wants, needs and interests with semicolons. Additional gift cards: Store | Amount; Store | Amount.</p>
+        <p style={{marginTop:10}}><a href="/household-import-template.csv" download>Download the full CSV template</a> · Use one row per child. For siblings, repeat the same parent or guardian name and email on each row. If there is no email, repeat the same phone number instead. Separate wants, needs and interests with semicolons. Additional gift cards: Store | Amount; Store | Amount.</p>
       </div>
       {!demo&&<details style={{ margin: "14px 0" }}>
         <summary style={{ cursor: "pointer", fontWeight: 700 }}>Or paste the email text</summary>
