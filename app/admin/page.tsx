@@ -46,7 +46,7 @@ export default async function AdminHome() {
         <Link className="kpi" href="/admin/children?view=gift&filter=gift-cards-received"><small>Gift cards received</small><b>${gcIn}</b><span>of ${gcAsk} requested</span></Link>
         <div className="kpi"><small>Return deadline</small><b>{dl >= 0 ? dl : "Past"}</b><span>{dl >= 0 ? `days to ${DRIVE.returnByLabel}` : `${DRIVE.returnByLabel} has passed`}</span></div>
       </div>
-      <div className="cols">
+      <div className="cols overview-cols">
         <div className="panel">
           <h3>Sponsorship and gift receipt</h3>
           <div className="bar" style={{ display: "flex", height: 14, marginTop: 14 }} role="img" aria-label="Pipeline">
