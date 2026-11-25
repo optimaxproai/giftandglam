@@ -331,3 +331,5 @@ td.check-cell input[type=checkbox] { width: 18px; height: 18px; accent-color: va
 textarea { resize: none; }
 tr.notes-row > td { padding-top: 0; border-top: 0; }
 tr.notes-row textarea { min-height: 72px; }
+tr.notes-row .field { grid-template-columns: minmax(0, 1fr); width: 100%; }
+tr.notes-row textarea { display: block; width: 100%; max-width: 100%; min-width: 0; }
