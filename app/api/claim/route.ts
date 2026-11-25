@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   try {
     const session=sponsorSession();
     const saved=b.reuseSponsor===true&&session?await store.sponsorByToken(session):null;
-    if(b.reuseSponsor===true&&!saved)return NextResponse.json({error:"Your sponsor session expired. Uncheck the saved-contact option or recover your private My Angels link."},{status:403});
+    if(b.reuseSponsor===true&&!saved)return NextResponse.json({error:"Your sponsor session expired. Uncheck the saved-contact option or recover your private My Angels link.",code:"session"},{status:403});
     const contact=b.reuseSponsor===true?saved!:{name:b.name,email:b.email,phone:b.phone||null};
     const token = await store.claim({ childId: b.childId, name: contact.name, email: contact.email, phone: contact.phone, gift: !!b.gift, sponsorToken: session });
     rememberSponsor(token);
@@ -45,9 +45,19 @@ export async function POST(req: Request) {
     } catch { /* claim already succeeded; never turn an email failure into a failed claim */ }
     return NextResponse.json({ ok: true, token, emailStatus });
   } catch (e) {
-    if (e instanceof CampaignError && e.code === "unavailable") return NextResponse.json({ error: "Someone just adopted this angel. Please pick another." }, { status: 409 });
+    if (e instanceof CampaignError && e.code === "unavailable") {
+      // A retry after a lost confirmation: if THIS browser's verified sponsor session already owns the claim, say so.
+      // The token returned is the caller's own session token, never one found by email.
+      try {
+        const session = sponsorSession();
+        const sponsor = session ? await store.sponsorByToken(session) : null;
+        const row = sponsor ? (await store.list()).find((c) => c.id === b.childId) : null;
+        if (session && sponsor && row && row.sponsor_id === sponsor.id) return NextResponse.json({ ok: true, alreadyAdopted: true, token: session });
+      } catch { /* fall through to the ordinary unavailable answer */ }
+      return NextResponse.json({ error: "Someone just adopted this angel. Please pick another.", code: "unavailable" }, { status: 409 });
+    }
     if (e instanceof CampaignError && e.code === "session") {
-      return NextResponse.json({ error: "Open your private My Angels link and choose Adopt Another Angel to continue on this device. If you lost the link, request a new one from My Angels." }, { status: 403 });
+      return NextResponse.json({ error: "This email already has a sponsor account. Open your private My Angels link and choose Adopt Another Angel, or request a new link below.", code: "session" }, { status: 403 });
     }
     return NextResponse.json({ error: "We couldn't save that. Please try again." }, { status: 500 });
   }

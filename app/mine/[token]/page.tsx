@@ -14,7 +14,7 @@ import { STATUS_LABEL, STATUS_ORDER } from "@/lib/types";
 export const dynamic = "force-dynamic";
 export const metadata = { title:"My Angels | Gift & Glam",referrer:"no-referrer" as const };
 
-export default async function Mine({ params }: { params: { token: string } }) {
+export default async function Mine({ params, searchParams }: { params: { token: string }; searchParams?: { already?: string } }) {
   const sponsor = await sponsorByToken(params.token);
   if (!sponsor) notFound();
   const all = await allChildren();
@@ -24,6 +24,7 @@ export default async function Mine({ params }: { params: { token: string } }) {
 
   return (
     <SiteShell>
+      {searchParams?.already === "1" && <p className="ok" role="status" style={{ marginBottom: 14 }}>You already adopted this angel. Your checklist is below.</p>}
       <div className="page-h">
         <div>
           <h2>My Angels</h2>

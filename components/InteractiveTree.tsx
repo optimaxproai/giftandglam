@@ -12,14 +12,14 @@ import ClaimForm from "./ClaimForm";
 const fullTree:TreeFilters={query:"",age:"",gender:"",availableOnly:false};
 function GiftList({title,items}:{title:string;items:string[]}){return <div className={styles.giftList}><h4 className={styles.listTitle}>{title}</h4>{items.length?<ul className="list">{items.map((item,i)=><li key={i}>{item}</li>)}</ul>:<p className="muted">Not listed</p>}</div>}
 function TreeDetail({child,hidden,hasSponsorSession,onBrowse}:{child:PublicChild|undefined;hidden:boolean;hasSponsorSession:boolean;onBrowse:()=>void}){
-  const [adopting,setAdopting]=useState(false);
+  const [adopting,setAdopting]=useState(false),[taken,setTaken]=useState(false);
   if(!child)return <><h3>Selected Angel Details</h3><p className="muted">Choose an ornament to see their wishes, needs and clothing sizes.</p></>;
   return <><div className={styles.detailHead}><div className={`${styles.detailBall} ${styles[treeColor(child,true)]}`} aria-hidden="true">★</div><div><h2>Angel <span className="numeric-text">{child.code}</span></h2><p className="muted">{[child.age===null?"Age not stated":`${child.age} years old`,child.gender||"Gender not stated"].join(" · ")}</p><span className={`pill ${child.available?"available":"claimed"}`}>{child.available?"Available":"Sponsored"}</span></div></div>
   {hidden&&<p className="muted">This angel is outside your current filters. Select Show full tree to see their ornament again.</p>}
   <div className="facts">{[["Shirt",child.tops],["Pants",child.bottoms],["Shoes",child.shoes],["Favorite color",child.favColor]].filter(([,size])=>!!size).map(([label,size])=><div className="fact" key={label}><small>{label}</small>{size}</div>)}</div>
   <GiftList title="Wants" items={child.wants}/><GiftList title="Needs" items={child.needs}/><GiftList title="Interests" items={child.faves}/>{child.gifts.length>0&&<GiftList title="Optional gift cards" items={child.gifts.map(g=>`$${g.amount} ${g.store}`)}/>}
   <p className="muted">{DRIVE.giftSuggestion}</p>
-  {adopting?<div className={styles.claimSection}><ClaimForm child={child} hasSponsorSession={hasSponsorSession}/></div>:child.available?<button type="button" className="btn" onClick={()=>setAdopting(true)}>Adopt {child.code}</button>:<p className="ok">This angel has a sponsor. Thank you for helping make Christmas bright!</p>}
+  {taken||(adopting&&!child.available)?<div className="err" role="alert"><p>Someone just adopted {child.code}. The tree has been refreshed.</p><button type="button" className="btn sm" onClick={onBrowse}>Find another angel</button></div>:adopting?<div className={styles.claimSection}><ClaimForm child={child} hasSponsorSession={hasSponsorSession} onUnavailable={()=>setTaken(true)}/></div>:child.available?<button type="button" className="btn" onClick={()=>setAdopting(true)}>Adopt {child.code}</button>:<p className="ok">This angel has a sponsor. Thank you for helping make Christmas bright!</p>}
   <div className={styles.browse}><p className="muted">Want to keep looking? Your filters will stay as they are.</p><button type="button" className="btn ghost sm" onClick={onBrowse}>Find another angel</button></div></>;
 }
 function scrollTo(el:HTMLElement|null){if(!el)return;el.scrollIntoView({block:"start",behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});el.focus({preventScroll:true})}
