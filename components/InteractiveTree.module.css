@@ -43,3 +43,8 @@
 
 /* Cinematic layout: the tree is the main right-hand panel and details are underneath. */
 .split{grid-template-columns:minmax(0,1fr);gap:16px}.filters{margin-top:0}.section .counts span{color:#d1eadb}.section .filters label{color:#d1eadb}.section .filters select,.section .filters input[type=search]{color:#1d2623}.section .filters button{background:#e6b440;color:#3a2a00;border-color:#e6b440}.scene{padding:15px 8px 10px;background:radial-gradient(ellipse at center,#183b2b,#081e17 90%)}.cinematic{background:url('/cinematic-tree.webp') center/100% 100% no-repeat;border-radius:14px;aspect-ratio:1/1;max-height:none}.flake{position:absolute;top:-10px;background:#fff;box-shadow:0 0 6px #fff8;border-radius:50%;animation:treeSnow linear infinite;pointer-events:none;z-index:3}@keyframes treeSnow{to{transform:translate(15px, min(100vh,850px));opacity:.1}}.detail{position:static;color:var(--ink);grid-template-columns:repeat(2,minmax(0,1fr));padding:20px;gap:14px}.detail>.detailHead,.detail>.facts,.detail>.btn,.detail>p{grid-column:1/-1}.detail .detailHead{margin-bottom:6px}.ornament{box-shadow:0 5px 12px #0009,inset 1px 1px 6px #fff7}.ornament.active{box-shadow:0 0 22px 5px #ffdf80bd,0 6px 12px #0007}.section .legend{color:#1d2623}.section .counts{color:#fff}.section .subtitle{color:#d1eadb}@media(max-width:760px){.detail{grid-template-columns:1fr}.cinematic{aspect-ratio:4/5}.viewport{padding-inline:0}}@media(prefers-reduced-motion:reduce){.flake{display:none!important}}
+
+.detail, .giftList { text-align: center; }
+.detailHead, .browse { justify-content: center; }
+.giftList ul { padding-inline: 0; list-style: none; }
+.detail .claimSection { text-align: left; }

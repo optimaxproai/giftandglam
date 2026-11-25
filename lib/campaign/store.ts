@@ -27,7 +27,7 @@ export interface CampaignStore {
   list(): Promise<ChildRow[]>;
   findFamily(phoneNorm: string, emailNorm: string): Promise<string | null>;
   createHousehold(f: NewFamily, kids: NewKid[], existingFamilyId?: string | null): Promise<{ familyId: string; childIds: string[] }>;
-  patchChild(id: string, patch: Partial<ChildRow>): Promise<void>;
+  patchChild(id: string, patch: Partial<ChildRow>, expectedDecision?: ChildRow["decision"]): Promise<void>;
   patchFamily(id: string, patch: Partial<FamilyRow> & { phone_norm?: string | null; email_norm?: string | null }): Promise<void>;
   getSettings(): Promise<Settings>;
   saveSettings(p: Partial<Settings>): Promise<void>;
@@ -104,9 +104,10 @@ export function createMemoryStore(state: MemState = emptyState()): CampaignStore
       }
       return { familyId, childIds };
     },
-    async patchChild(id, patch) {
+    async patchChild(id, patch, expectedDecision) {
       const c = state.children.find((x) => x.id === id);
       if (!c) throw new CampaignError("Child not found.", "not_found");
+      if (expectedDecision && c.decision !== expectedDecision) throw new CampaignError("This decision changed. Refresh and try again.", "conflict");
       const next = { ...c, ...patch };
       if (next.approved && next.decision !== "approved") throw new CampaignError("Only approved children can be published.", "conflict");
       if (patch.sponsor_id !== undefined && c.sponsor_id && c.sponsor_id !== patch.sponsor_id) clearSponsorPurchases(c.id);
@@ -242,10 +243,16 @@ export function createSupabaseStore(): CampaignStore {
       const rows = ok(await db().from("children").insert(kids.map((k) => ({ ...k, family_id: familyId }))).select("id")) as { id: string }[];
       return { familyId, childIds: rows.map((r) => r.id) };
     },
-    async patchChild(id, patch) {
+    async patchChild(id, patch, expectedDecision) {
       const { family, sponsor, ...cols } = patch as ChildRow;
       void family; void sponsor;
-      ok(await db().from("children").update(cols).eq("id", id));
+      const update = db().from("children").update(cols).eq("id", id);
+      if (!expectedDecision) {
+        ok(await update);
+        return;
+      }
+      const updated = ok(await update.eq("decision", expectedDecision).select("id"));
+      if (!updated?.length) throw new CampaignError("This decision changed. Refresh and try again.", "conflict");
     },
     async patchFamily(id, patch) {
       ok(await db().from("families").update(patch).eq("id", id));

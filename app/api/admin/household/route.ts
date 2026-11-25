@@ -36,6 +36,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("confirm_age"), childId: id }),
   z.object({ action: z.literal("publish"), childId: id }),
   z.object({ action: z.literal("unpublish"), childId: id }),
+  z.object({ action: z.literal("bulk"), operation: z.enum(["approve", "publish"]), childIds: z.array(id).min(1).max(25) }),
   z.object({ action: z.literal("publish_all"), familyId: id.optional() }),
   z.object({ action: z.literal("update_household"), familyId: id, parentName: z.string().max(160).optional(), phone: z.string().max(40).optional(), email: z.string().max(200).optional(), story: z.string().max(2000).optional() }),
   z.object({ action: z.literal("save_max_age"), maxAge: z.number().int() }),
@@ -65,6 +66,22 @@ export async function POST(req: Request) {
     else if (b.action === "confirm_age") await c.confirmAge(b.childId);
     else if (b.action === "publish") await c.publish(b.childId);
     else if (b.action === "unpublish") await c.unpublish(b.childId);
+    else if (b.action === "bulk") {
+      const results = [];
+      for (const childId of new Set(b.childIds)) {
+        try {
+          if (b.operation === "approve") await c.decide(childId, "approved", { by, pendingOnly: true });
+          else await c.publish(childId);
+          results.push({ childId });
+        } catch (error) {
+          results.push({
+            childId,
+            error: error instanceof CampaignError ? error.message : "Could not save this child. Try again.",
+          });
+        }
+      }
+      result = { results };
+    }
     else if (b.action === "publish_all") result = { published: await c.publishAll(b.familyId) };
     else if (b.action === "update_household") await c.updateHousehold(b.familyId, b);
     else if (b.action === "save_max_age") result = await c.saveMaxAge(b.maxAge, by);

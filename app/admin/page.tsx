@@ -38,12 +38,12 @@ export default async function AdminHome() {
       </div>
       {!s.settings.maxAgeConfirmed && <div className="banner-warn">The season age limit starts at {s.settings.maxAge} and has not been confirmed. <Link href="/admin/households">Confirm it on the Households page</Link> before deciding anyone.</div>}
       <div className="kpis">
-        <div className="kpi"><small>Households to review</small><b>{s.households.review}</b><span>{s.households.waiting} waiting on a family</span></div>
-        <div className="kpi"><small>Set aside</small><b>{s.setAside}</b><span>{s.households.set_aside} households out of the queue</span></div>
-        <div className="kpi"><small>On the tree</small><b>{s.published}</b><span>goal {DRIVE.goal} · {approvedNotPublished} approved, not published</span></div>
-        <div className="kpi"><small>Sponsored</small><b>{s.sponsored}</b><span>{tree.length ? Math.round((s.sponsored / tree.length) * 100) : 0}% of the tree</span></div>
-        <div className="kpi"><small>Individual gifts received</small><b>{gifts.received}</b><span>of {gifts.total} requests</span></div>
-        <div className="kpi"><small>Gift cards received</small><b>${gcIn}</b><span>of ${gcAsk} requested</span></div>
+        <Link className="kpi" href="/admin/households?state=review"><small>Households to review</small><b>{s.households.review}</b><span>{s.households.waiting} waiting on a family</span></Link>
+        <Link className="kpi" href="/admin/children?filter=set_aside"><small>Set aside</small><b>{s.setAside}</b><span>{s.households.set_aside} households out of the queue</span></Link>
+        <Link className="kpi" href="/admin/children?filter=tree"><small>On the tree</small><b>{s.published}</b><span>goal {DRIVE.goal} · {approvedNotPublished} approved, not published</span></Link>
+        <Link className="kpi" href="/admin/children?filter=sponsored"><small>Sponsored</small><b>{s.sponsored}</b><span>{tree.length ? Math.round((s.sponsored / tree.length) * 100) : 0}% of the tree</span></Link>
+        <Link className="kpi" href="/admin/gifts?filter=received"><small>Individual gifts received</small><b>{gifts.received}</b><span>of {gifts.total} requests</span></Link>
+        <Link className="kpi" href="/admin/gifts?filter=gift-cards-received"><small>Gift cards received</small><b>${gcIn}</b><span>of ${gcAsk} requested</span></Link>
         <div className="kpi"><small>Return deadline</small><b>{dl >= 0 ? dl : "Past"}</b><span>{dl >= 0 ? `days to ${DRIVE.returnByLabel}` : `${DRIVE.returnByLabel} has passed`}</span></div>
       </div>
       <div className="cols">
@@ -67,7 +67,7 @@ export default async function AdminHome() {
           <ul className="list" style={{ marginTop: 12, paddingLeft: 18 }}>
             {s.households.review > 0 && <li><b>{s.households.review} household{s.households.review === 1 ? "" : "s"}</b> need a decision. <Link href="/admin/households?state=review">Review</Link></li>}
             {s.ageFlags > 0 && <li><b>{s.ageFlags} child{s.ageFlags === 1 ? "" : "ren"}</b> with a missing or unclear age. <Link href="/admin/households?state=review">Fix</Link></li>}
-            {approvedNotPublished > 0 && <li><b>{approvedNotPublished} approved</b> but not on the tree. <Link href="/admin/households?state=decided">Publish</Link></li>}
+            {approvedNotPublished > 0 && <li><b>{approvedNotPublished} approved</b> but not on the tree. <Link href="/admin/children?filter=approved">Publish</Link></li>}
             {count.available > 0 && <li><b>{count.available} angels</b> still need a sponsor.</li>}
             {out > 0 && <li><b>{out} angels</b> have gifts still with sponsors. <Link href="/admin/sponsors">Follow up</Link></li>}
             {giftGaps>0&&<li><b>{giftGaps} gift requests</b> have no recorded purchase or receipt. <Link href="/admin/gifts">Review gifts</Link></li>}
