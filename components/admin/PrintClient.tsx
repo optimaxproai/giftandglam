@@ -186,9 +186,13 @@ export default function PrintClient({ items, savedStock }: { items: PrintItem[];
                   left: `${left}in`, top: `${top}in`, width: `${stock.w}in`, height: `${stock.h}in`,
                   ...(stock.page ? { padding: `${Math.min(0.08, stock.h * 0.05)}in ${Math.min(0.14, stock.w * 0.05)}in`, overflowWrap: "anywhere" } : {}),
                 }}>
-                  <div className="c" style={{ fontSize: `${f.c}pt` }}>{item.code}</div>
-                  <div className="l" style={{ fontSize: `${f.l}pt` }}>{item.family}{stock.h < 1.3 ? " · " : ""}{stock.h < 1.3 ? [item.gender, item.age].filter(Boolean).join(" · ") : ""}</div>
-                  {stock.h >= 1.3 && <div className="l" style={{ fontSize: `${f.l}pt` }}>{[item.gender, item.age].filter(Boolean).join(" · ")}</div>}
+                  <div className="lab-band" aria-hidden="true" />
+                  <div className="lab-body">
+                    <div className="n" style={{ fontSize: `${f.c * Math.min(1, 10 / Math.max((item.family || "").length, 6))}pt` }}>{item.family || "Family"}</div>
+                    <div className="c" style={{ fontSize: `${f.c * 0.66}pt` }}>{item.code}</div>
+                    <div className="m" style={{ fontSize: `${f.l}pt` }}>{[item.gender, item.age].filter(Boolean).join(" · ")}</div>
+                  </div>
+                  <div className="lab-band" aria-hidden="true" />
                 </div>
               );
             })}

@@ -37,6 +37,7 @@ export interface CampaignStore {
   claim(a: { childId: string; name: string; email: string; phone: string | null; gift: boolean; sponsorToken: string | null }): Promise<string>;
   sponsorByToken(token: string): Promise<SponsorRow | null>;
   sponsorByEmail(email:string):Promise<SponsorRow|null>;
+  updateSponsor(id: string, input: { name: string; email: string; phone: string | null }): Promise<void>;
   listGiftItems(childIds?: string[]): Promise<GiftItem[]>;
   setSponsorGift(token: string, itemId: string, purchased: boolean): Promise<boolean>;
   setAdminGift(edit: AdminGiftEdit): Promise<boolean>;
@@ -164,6 +165,16 @@ export function createMemoryStore(state: MemState = emptyState(), newRecordId = 
       return sp ? clone(sp) : null;
     },
     async sponsorByEmail(email){const sp=[...state.sponsors.values()].find(x=>x.email_norm===normEmail(email));return sp?clone(sp):null;},
+    async updateSponsor(id, input) {
+      const sp = state.sponsors.get(id);
+      if (!sp) throw new CampaignError("Sponsor not found.", "not_found");
+      const norm = normEmail(input.email);
+      if ([...state.sponsors.values()].some((x) => x.id !== id && x.email_norm === norm)) throw new CampaignError("Another sponsor already uses that email.", "conflict");
+      sp.name = input.name.trim();
+      sp.email = input.email.trim();
+      sp.email_norm = norm;
+      sp.phone = input.phone?.trim() || null;
+    },
     async listGiftItems(childIds) {
       state.children.forEach(sync);
       return clone(state.giftItems.filter(g => !childIds || childIds.includes(g.child_id)).sort((a,b) => a.position-b.position));
@@ -297,6 +308,13 @@ export function createSupabaseStore(): CampaignStore {
       return (ok(await db().from("sponsors").select("*").eq("token", token).maybeSingle()) as SponsorRow | null) ?? null;
     },
     async sponsorByEmail(email){return (ok(await db().from("sponsors").select("*").eq("email_norm",normEmail(email)).maybeSingle()) as SponsorRow|null)??null;},
+    async updateSponsor(id, input) {
+      const norm = normEmail(input.email);
+      const clash = ok(await db().from("sponsors").select("id").eq("email_norm", norm).neq("id", id).limit(1)) as { id: string }[] | null;
+      if (clash?.length) throw new CampaignError("Another sponsor already uses that email.", "conflict");
+      const updated = ok(await db().from("sponsors").update({ name: input.name.trim(), email: input.email.trim(), email_norm: norm, phone: input.phone?.trim() || null }).eq("id", id).select("id")) as { id: string }[] | null;
+      if (!updated?.length) throw new CampaignError("Sponsor not found.", "not_found");
+    },
     async listGiftItems(childIds) {
       if (childIds?.length === 0) return [];
       const result: GiftItem[] = [];

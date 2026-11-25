@@ -8,6 +8,8 @@ import { STATUS_LABEL } from "@/lib/types";
 import SponsorContacts from "@/components/admin/SponsorContacts";
 import { getCampaign } from "@/lib/campaign";
 import DonationManagement from "@/components/admin/DonationManagement";
+import SponsorCells from "@/components/admin/SponsorCells";
+import { displaySponsorName, donorNames } from "@/lib/sponsorDisplay";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,7 @@ async function DonationsPanel() {
 async function SponsorsPanel() {
   const rows = (await allChildren()).filter((c) => c.sponsor).sort((a, b) => a.no - b.no);
   const contacts = await (await getCampaign()).store.listSponsorContacts();
+  const donors = donorNames(await (await getCampaign()).store.listDonationOffers());
   const dl = daysUntil(DRIVE.returnBy);
 
   return (
@@ -59,11 +62,11 @@ async function SponsorsPanel() {
             <tbody>
               {rows.map((c) => {
                 const open = c.status === "claimed" || c.status === "purchased";
-                const first = c.sponsor!.name.split(" ")[0];
+                const shown = displaySponsorName(c.sponsor!, donors);
+                const first = shown.name.split(" ")[0];
                 return (
                   <tr key={c.id}>
-                    <td><b>{c.sponsor!.name}</b></td>
-                    <td>{c.sponsor!.phone || ""}<br />{c.sponsor!.email}</td>
+                    <SponsorCells id={c.sponsor!.id} name={c.sponsor!.name} email={c.sponsor!.email} phone={c.sponsor!.phone} shownName={shown.name} fromDonation={shown.fromDonation} />
                     <td><Link href={`/admin/children/${c.id}`}>{c.angel_code} {c.first_name}</Link></td>
                     <td><span className="pill claimed">{STATUS_LABEL[c.status]}</span></td>
                     <td style={{ maxWidth: 360, fontSize: ".82rem" }}>
