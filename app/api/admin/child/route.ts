@@ -34,6 +34,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("update"), id: z.string().uuid(), patch: Patch.optional(), family: FamilyPatch.optional() }),
   z.object({ action: z.literal("status"), id: z.string().uuid(), status: z.enum(["available", "claimed", "purchased", "returned", "given"]) }),
   z.object({ action: z.literal("gift"), id: z.string().uuid(), value: z.enum(["none", "pledged", "received"]) }),
+  z.object({ action: z.literal("clear_all"), id: z.string().uuid() }),
   z.object({ action: z.literal("photo"), id: z.string().uuid(), dataUrl: z.string().nullable() }),
 ]);
 
@@ -85,6 +86,9 @@ export async function POST(req: Request) {
         const c = (await store.list()).find((x) => x.id === b.id);
         if (c?.gift_card_status === "pledged") await store.patchChild(b.id, { gift_card_status: "none" });
       }
+    } else if (b.action === "clear_all") {
+      // Back to a clean slate: no sponsor, Available, gift cards off. The tree setting and the decision are never touched.
+      await store.patchChild(b.id, { status: "available", sponsor_id: null, claimed_at: null, returned_at: null, gift_card_status: "none" });
     } else if (b.action === "gift") {
       await store.patchChild(b.id, { gift_card_status: b.value });
     } else if (b.action === "photo") {
