@@ -13,7 +13,7 @@ export type Settings = { maxAge: number; maxAgeConfirmed: boolean; labelStock: L
 export type NewFamily = { parent_name: string; phone: string | null; email: string | null; story: string | null; source_label: string | null };
 export type NewKid = Pick<
   ChildRow,
-  "full_name" | "first_name" | "age" | "age_uncertain" | "gender" | "tops" | "bottoms" | "shoes" | "wants" | "needs" | "faves" | "fav_color" | "gift_store" | "gift_amount" | "gift_cards" | "decision" | "decision_reason" | "set_aside_code" | "organizer_notes"
+  "full_name" | "first_name" | "age" | "age_uncertain" | "gender" | "tops" | "coat_size" | "bottoms" | "shoes" | "wants" | "needs" | "faves" | "fav_color" | "gift_store" | "gift_amount" | "gift_cards" | "decision" | "decision_reason" | "set_aside_code" | "organizer_notes"
 >;
 
 export class CampaignError extends Error {
@@ -57,7 +57,7 @@ export function emptyState(): MemState {
 }
 
 /** In-memory store. Mirrors the database rules (angel codes, published-needs-approved, atomic claim). */
-export function createMemoryStore(state: MemState = emptyState()): CampaignStore & { state: MemState } {
+export function createMemoryStore(state: MemState = emptyState(), newRecordId = randomUUID as () => string): CampaignStore & { state: MemState } {
   state.giftItems ??= [];
   state.donationOffers ??= [];
   const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x));
@@ -66,7 +66,7 @@ export function createMemoryStore(state: MemState = emptyState()): CampaignStore
     for (const request of requestItems(c)) {
       const previous = state.giftItems.find(g => g.child_id === c.id && g.item_key === request.item_key);
       if (previous) Object.assign(previous, request);
-      else state.giftItems.push({ ...request, id: randomUUID(), purchase_source: null, received: false, donation_assigned: false });
+      else state.giftItems.push({ ...request, id: newRecordId(), purchase_source: null, received: false, donation_assigned: false });
     }
   }
   const clearSponsorPurchases = (id: string) => state.giftItems.filter(g => g.child_id === id && g.purchase_source === "sponsor" && !g.received).forEach(g => { g.purchase_source = null; });
@@ -87,13 +87,13 @@ export function createMemoryStore(state: MemState = emptyState()): CampaignStore
     async createHousehold(f, kids, existingFamilyId) {
       let familyId = existingFamilyId || "";
       if (!familyId) {
-        familyId = randomUUID();
+        familyId = newRecordId();
         state.families.set(familyId, { id: familyId, ...f, created_at: nowIso(), phone_norm: normPhone(f.phone) || null, email_norm: normEmail(f.email) || null });
       }
       const childIds: string[] = [];
       for (const k of kids) {
         const c: ChildRow = {
-          id: randomUUID(), no: ++state.no, family_id: familyId, ...k,
+          id: newRecordId(), no: ++state.no, family_id: familyId, ...k,
           gift_card_status: "none", photo_path: null, photo_public: false, approved: false, status: "available",
           sponsor_id: null, claimed_at: null, returned_at: null, angel_code: null, decided_at: null, decided_by: null,
         };

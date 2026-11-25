@@ -48,3 +48,6 @@
 .detailHead, .browse { justify-content: center; }
 .giftList ul { padding-inline: 0; list-style: none; }
 .detail .claimSection { text-align: left; }
+.detail > .sizeRow, .giftRow { grid-column: 1 / -1; }
+.giftRow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 620px) { .giftRow { grid-template-columns: 1fr; } }

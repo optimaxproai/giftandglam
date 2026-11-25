@@ -1,8 +1,7 @@
+import { getSponsorStore } from "@/lib/review-sponsorship";
 import { SiteShell } from "@/components/Festive";
 import InteractiveTree from "@/components/InteractiveTree";
-import { sponsorByToken } from "@/lib/data";
 import { publicTree } from "@/lib/child";
-import { getCampaign } from "@/lib/campaign";
 import { campaignImpact, type CampaignImpact as Totals } from "@/lib/campaignImpact";
 import { sponsorSession } from "@/lib/sponsor-session";
 import CampaignImpact from "@/components/CampaignImpact";
@@ -17,13 +16,13 @@ export default async function Home({searchParams}: {searchParams?: {angel?: stri
   let failed = false;
   let hasSponsorSession = false;
   try {
-    const store = (await getCampaign()).store;
+    const store = await getSponsorStore();
     const rows = await store.list();
     kids = publicTree(rows);
     const token = sponsorSession();
     const [stats, session] = await Promise.allSettled([
       Promise.all([store.listGiftItems(),store.listDonationOffers()]).then(([items,offers])=>campaignImpact(rows,items,offers)),
-      token ? sponsorByToken(token) : Promise.resolve(null),
+      token ? store.sponsorByToken(token) : Promise.resolve(null),
     ]);
     if (stats.status === "fulfilled") totals = stats.value;
     hasSponsorSession = session.status === "fulfilled" && !!session.value;

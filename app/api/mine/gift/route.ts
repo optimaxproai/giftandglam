@@ -1,6 +1,6 @@
+import { getSponsorStore, saveReviewChecklist } from "@/lib/review-sponsorship";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCampaign } from "@/lib/campaign";
 import { allow, clientIp } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,9 @@ export async function POST(req: Request) {
   const p=Body.safeParse(await req.json().catch(()=>null));
   if (!p.success) return NextResponse.json({error:"Check the gift selection."},{status:400});
   try {
-    if (!await (await getCampaign()).store.setSponsorGift(p.data.token,p.data.itemId,p.data.purchased)) return NextResponse.json({error:"This gift cannot be changed. Refresh your list or contact the organizer."},{status:409});
+    const store = await getSponsorStore();
+    if (!await store.setSponsorGift(p.data.token,p.data.itemId,p.data.purchased)) return NextResponse.json({error:"This gift cannot be changed. Refresh your list or contact the organizer."},{status:409});
+    await saveReviewChecklist(store, p.data.token);
     return NextResponse.json({ok:true});
   } catch { return NextResponse.json({error:"The gift didn't save. Please try again."},{status:500}); }
 }

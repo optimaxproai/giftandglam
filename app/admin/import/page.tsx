@@ -13,7 +13,7 @@ export default async function ImportPage() {
         <div>
           <h2>Import family applications</h2>
           <p className="muted" style={{ maxWidth: "60ch" }}>
-            Upload a CSV for local, deterministic reading of each child and household. PDF and email reading uses an external AI service; review all results before saving. Choose CSV or manual entry for confidential intake without AI. Nothing goes on the tree until the organizer approves and publishes it.
+            Upload a CSV for local, deterministic reading of each child and family. PDF and email reading uses an external AI service; review all results before saving. Choose CSV or manual entry for confidential intake without AI. Nothing goes on the tree until the organizer approves and publishes it.
           </p>
         </div>
       </div>

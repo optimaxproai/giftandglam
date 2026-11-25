@@ -1,6 +1,6 @@
+import { browserReviewAdoptions, getSponsorStore, saveReviewChecklist } from "@/lib/review-sponsorship";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getCampaign } from "@/lib/campaign";
 import { CampaignError } from "@/lib/campaign/store";
 import { allow, clientIp } from "@/lib/rateLimit";
 import { rememberSponsor, sponsorSession } from "@/lib/sponsor-session";
@@ -18,7 +18,7 @@ const Common = z.object({
 });
 const Body = z.union([Common.extend({reuseSponsor:z.literal(true)}),Common.extend({
   reuseSponsor:z.literal(false).optional(),
-  name: z.string().trim().min(1).max(120),
+  name: z.string().trim().max(120).nullish(),
   email: z.string().trim().email().max(200),
   phone: z.string().trim().max(40).optional().nullable(),
 })]);
@@ -26,22 +26,32 @@ const Body = z.union([Common.extend({reuseSponsor:z.literal(true)}),Common.exten
 export async function POST(req: Request) {
   if (!allow(`claim:${clientIp(req)}`, 8, 10 * 60_000)) return NextResponse.json({ error: "Too many tries. Please wait a few minutes." }, { status: 429 });
   const parsed = Body.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Please check your name and email." }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: "Please enter a valid email address and check any optional contact details." }, { status: 400 });
   const b = parsed.data;
   if (b.website) return NextResponse.json({ ok: true, token: "x" }); // bots get a fake success
 
-  const store = (await getCampaign()).store;
+  const store = await getSponsorStore();
   try {
     const session=sponsorSession();
-    const saved=b.reuseSponsor===true&&session?await store.sponsorByToken(session):null;
+    const saved = session ? await store.sponsorByToken(session) : null;
     if(b.reuseSponsor===true&&!saved)return NextResponse.json({error:"Your sponsor session expired. Uncheck the saved-contact option or recover your private My Angels link.",code:"session"},{status:403});
-    const contact=b.reuseSponsor===true?saved!:{name:b.name,email:b.email,phone:b.phone||null};
-    const token = await store.claim({ childId: b.childId, name: contact.name, email: contact.email, phone: contact.phone, gift: !!b.gift, sponsorToken: session });
+    const sameSponsor = b.reuseSponsor !== true && saved?.email.trim().toLowerCase() === b.email.toLowerCase()
+      ? saved : null;
+    const contact = b.reuseSponsor === true ? saved! : {
+      name: b.name || sameSponsor?.name || "Anonymous sponsor",
+      email: b.email,
+      phone: b.phone || sameSponsor?.phone || null,
+    };
+    const previewContact = browserReviewAdoptions()
+      ? { name: "Anonymous sponsor", email: saved?.email ?? "first-claim@example.invalid", phone: null }
+      : contact;
+    const token = await store.claim({ childId: b.childId, ...previewContact, gift: !!b.gift, sponsorToken: session });
+    await saveReviewChecklist(store, token);
     rememberSponsor(token);
     let emailStatus:"sent"|"unavailable"|"demo"=demoMode()?"demo":"unavailable";
     try {
       const all=await store.list(),row=all.find(c=>c.id===b.childId),link=sponsorLink(token);
-      if(row&&link){const c=toPublic(row,all);emailStatus=await sendSponsorMail(contact.email,`Gift & Glam: thank you for adopting ${c.code}`,`Hi ${contact.name.split(" ")[0]},\n\nThank you for making Christmas magical!\n\n${sponsorInstructions(c)}\n\nOpen your private My Angels checklist to mark purchased items and select Done shopping:\n${link}\n\nKeep this private link to yourself. Share only the public campaign message below.\n\n${campaignShareText()}`);}
+      if(row&&link){const c=toPublic(row,all);emailStatus=await sendSponsorMail(contact.email,`Gift & Glam: thank you for adopting ${c.code}`,`${contact.name === "Anonymous sponsor" ? "Hello," : `Hi ${contact.name.split(" ")[0]},`}\n\nThank you for making Christmas magical!\n\n${sponsorInstructions(c)}\n\nOpen your private My Angels checklist to mark purchased items and select Done shopping:\n${link}\n\nKeep this private link to yourself. Share only the public campaign message below.\n\n${campaignShareText()}`);}
     } catch { /* claim already succeeded; never turn an email failure into a failed claim */ }
     return NextResponse.json({ ok: true, token, emailStatus });
   } catch (e) {

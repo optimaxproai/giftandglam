@@ -34,16 +34,16 @@ export default async function AdminHome() {
     <SiteShell admin>
       <div className="page-h">
         <h2>Drive overview</h2>
-        <div className="acts"><Link href="/admin/households/new" className="btn">+ Enter a household</Link><Link href="/admin/households" className="btn ghost">Households</Link><Link href="/admin/gifts" className="btn ghost">Gifts Management</Link></div>
+        <div className="acts"><Link href="/admin/households/new" className="btn">+ Add a family</Link><Link href="/admin/households" className="btn ghost">Families</Link><Link href="/admin/children?view=gift" className="btn ghost">By Gift</Link></div>
       </div>
-      {!s.settings.maxAgeConfirmed && <div className="banner-warn">The season age limit starts at {s.settings.maxAge} and has not been confirmed. <Link href="/admin/households">Confirm it on the Households page</Link> before deciding anyone.</div>}
+      {!s.settings.maxAgeConfirmed && <div className="banner-warn">The season age limit starts at {s.settings.maxAge} and has not been confirmed. <Link href="/admin/households">Confirm it on the Families page</Link> before deciding anyone.</div>}
       <div className="kpis overview-kpis">
-        <Link className="kpi" href="/admin/households?state=review"><small>Households to review</small><b>{s.households.review}</b><span>{s.households.waiting} waiting on a family</span></Link>
-        <Link className="kpi" href="/admin/children?filter=set_aside"><small>Set aside</small><b>{s.setAside}</b><span>{s.households.set_aside} households out of the queue</span></Link>
+        <Link className="kpi" href="/admin/households?state=review"><small>Families to review</small><b>{s.households.review}</b><span>{s.households.waiting} waiting on a family</span></Link>
+        <Link className="kpi" href="/admin/children?filter=set_aside"><small>Set aside</small><b>{s.setAside}</b><span>{s.households.set_aside} families out of the queue</span></Link>
         <Link className="kpi" href="/admin/children?filter=tree"><small>On the tree</small><b>{s.published}</b><span>goal {DRIVE.goal} · {approvedNotPublished} approved, not published</span></Link>
         <Link className="kpi" href="/admin/children?filter=sponsored"><small>Sponsored</small><b>{s.sponsored}</b><span>{tree.length ? Math.round((s.sponsored / tree.length) * 100) : 0}% of the tree</span></Link>
-        <Link className="kpi" href="/admin/gifts?filter=received"><small>Individual gifts received</small><b>{gifts.received}</b><span>of {gifts.total} requests</span></Link>
-        <Link className="kpi" href="/admin/gifts?filter=gift-cards-received"><small>Gift cards received</small><b>${gcIn}</b><span>of ${gcAsk} requested</span></Link>
+        <Link className="kpi" href="/admin/children?view=gift&filter=received"><small>Individual gifts received</small><b>{gifts.received}</b><span>of {gifts.total} requests</span></Link>
+        <Link className="kpi" href="/admin/children?view=gift&filter=gift-cards-received"><small>Gift cards received</small><b>${gcIn}</b><span>of ${gcAsk} requested</span></Link>
         <div className="kpi"><small>Return deadline</small><b>{dl >= 0 ? dl : "Past"}</b><span>{dl >= 0 ? `days to ${DRIVE.returnByLabel}` : `${DRIVE.returnByLabel} has passed`}</span></div>
       </div>
       <div className="cols">
@@ -70,8 +70,8 @@ export default async function AdminHome() {
             {approvedNotPublished > 0 && <li><b>{approvedNotPublished} approved</b> but not on the tree. <Link href="/admin/children?filter=approved">Publish</Link></li>}
             {count.available > 0 && <li><b>{count.available} angels</b> still need a sponsor.</li>}
             {out > 0 && <li><b>{out} angels</b> have gifts still with sponsors. <Link href="/admin/sponsors">Follow up</Link></li>}
-            {giftGaps>0&&<li><b>{giftGaps} gift requests</b> have no recorded purchase or receipt. <Link href="/admin/gifts">Review gifts</Link></li>}
-            {pendingOffers>0&&<li><b>{pendingOffers} donation or volunteer offers</b> need follow-up. <Link href="/admin/donations">Review offers</Link></li>}
+            {giftGaps>0&&<li><b>{giftGaps} gift requests</b> have no recorded purchase or receipt. <Link href="/admin/children?view=gift">Review gifts</Link></li>}
+            {pendingOffers>0&&<li><b>{pendingOffers} donation or volunteer offers</b> need follow-up. <Link href="/admin/sponsors?tab=donations">Review offers</Link></li>}
             {!s.households.review && !approvedNotPublished && !count.available && !out && !giftGaps&&!pendingOffers && <li className="muted">Nothing is waiting on you.</li>}
           </ul>
           <div className="acts" style={{ marginTop: 14 }}><Link className="btn sm ghost" href="/admin/print">Print labels</Link></div>

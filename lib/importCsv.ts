@@ -12,6 +12,7 @@ const columns = {
   ageUnsure: ["age unclear", "age unsure", "age uncertain"],
   gender: ["gender", "child gender"],
   tops: ["shirt size", "top size", "tops"],
+  coatSize: ["coat size", "jacket size"],
   bottoms: ["pants size", "bottom size", "bottoms"],
   shoes: ["shoe size", "shoes"],
   wants: ["wants", "wishes", "wish list"],
@@ -156,7 +157,7 @@ export function parseHouseholdCsv(input: string): DraftFamily[] {
     family.phone ||= phone;
     family.story ||= story;
     family.children.push({
-      fullName, age, gender, tops: get("tops"), bottoms: get("bottoms"), shoes: get("shoes"),
+      fullName, age, gender, tops: get("tops"), coatSize: get("coatSize"), bottoms: get("bottoms"), shoes: get("shoes"),
       wants, needs, faves: faves.slice(0,3), ageUnsure: ["yes","true","1"].includes(unsureText), notes,
       favColor: get("favColor"), giftStore: giftCards[0]?.store||"", giftAmount: giftCards[0]?.amount||25, giftCards, photo: null,
     });

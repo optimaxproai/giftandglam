@@ -24,10 +24,10 @@ export default async function Households({ searchParams }: { searchParams: { sta
   return (
     <SiteShell admin>
       <div className="page-h">
-        <h2>Households</h2>
-        <div className="acts">{reviewMode() && <ResetCampaign />}<Link className="btn" href="/admin/households/new">+ Enter a household</Link></div>
+        <h2>Families</h2>
+        <div className="acts">{reviewMode() && <ResetCampaign />}<Link className="btn" href="/admin/households/new">+ Add a family</Link></div>
       </div>
-      <p className="muted" style={{ marginBottom: 16 }}>Enter each printed email as one household, record a decision for every child, then publish approved angels.</p>
+      <p className="muted" style={{ marginBottom: 16 }}>Enter each printed email as one family, record a decision for every child, then publish approved angels.</p>
       <SettingsBar maxAge={maxAge} confirmed={s.settings.maxAgeConfirmed} />
       <nav className="tabs" aria-label="Filter">
         {TABS.map(([k, label]) => (
@@ -38,12 +38,12 @@ export default async function Households({ searchParams }: { searchParams: { sta
       </nav>
       <form className="toolbar" action="/admin/households" method="get" style={{ margin: "12px 0" }}>
         {state && <input type="hidden" name="state" value={state} />}
-        <input type="search" aria-label="Search households" name="q" placeholder="Search parent, child, angel code, phone or email" defaultValue={query} maxLength={200} />
+        <input type="search" aria-label="Search families" name="q" placeholder="Search parent, child, angel code, phone or email" defaultValue={query} maxLength={200} />
         <button className="btn sm" type="submit">Search</button>
         {query && <Link className="btn sm ghost" href={state ? `/admin/households?state=${state}` : "/admin/households"}>Clear</Link>}
       </form>
       {list.length === 0 ? (
-        <div className="empty"><h3>Nothing here</h3><p>{all.length ? "No households in this view." : "Enter the first household from a printed email."}</p></div>
+        <div className="empty"><h3>Nothing here</h3><p>{all.length ? "No families in this view." : "Enter the first family from a printed email."}</p></div>
       ) : (
         <div className="tw">
           <table>

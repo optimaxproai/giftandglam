@@ -1,9 +1,9 @@
+import { getSponsorStore } from "@/lib/review-sponsorship";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/Festive";
 import { Ornament } from "@/components/Ornament";
 import ClaimForm from "@/components/ClaimForm";
-import { allChildren, sponsorByToken } from "@/lib/data";
 import { toPublic, onTree } from "@/lib/child";
 import { DRIVE } from "@/lib/drive";
 import { sponsorSession } from "@/lib/sponsor-session";
@@ -20,11 +20,12 @@ function List({ title, items }: { title: string; items: string[] }) {
 }
 
 export default async function AngelPage({ params }: { params: { id: string } }) {
-  const all = await allChildren();
+  const store = await getSponsorStore();
+  const all = await store.list();
   const row = all.find((c) => c.id === params.id && onTree(c));
   if (!row) notFound();
   const c = toPublic(row, all);
-  const token=sponsorSession(); const hasSponsorSession=token ? !!(await sponsorByToken(token)) : false;
+  const token=sponsorSession(); const hasSponsorSession=token ? !!(await store.sponsorByToken(token)) : false;
 
   return (
     <SiteShell>
@@ -42,6 +43,7 @@ export default async function AngelPage({ params }: { params: { id: string } }) 
             </div>
           </div>
           <div className="facts">
+            {c.coat_size && <div className="fact"><small>Coat</small>{c.coat_size}</div>}
             {c.tops && <div className="fact"><small>Shirt</small>{c.tops}</div>}
             {c.bottoms && <div className="fact"><small>Pants</small>{c.bottoms}</div>}
             {c.shoes && <div className="fact"><small>Shoes</small>{c.shoes}</div>}

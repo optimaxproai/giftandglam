@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import { Ornament } from "@/components/Ornament";
+import { GiftItemCells, useGiftEdit } from "./GiftItemCells";
+import { giftCounts, giftLabel, GIFT_KIND, type GiftItem } from "@/lib/giftItems";
 import StatusButtons from "@/components/admin/StatusButtons";
 import TreeToggle from "@/components/admin/TreeToggle";
 import { DECISION_LABEL, DECISION_PILL } from "@/lib/campaign/rules";
@@ -52,8 +54,30 @@ function matchesStatus(row: Row, status: string) {
   return row.status === status;
 }
 
-export default function ChildrenTable({ rows, initialFilter = "" }: { rows: Row[]; initialFilter?: string }) {
+export default function ChildrenTable({ rows, gifts, initialFilter = "" }: { rows: Row[]; gifts: GiftItem[]; initialFilter?: string }) {
   const router = useRouter();
+  const giftEdit = useGiftEdit();
+  const [expanded, setExpanded] = useState("");
+  const [giftFilter, setGiftFilter] = useState("");
+  const [kind, setKind] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+  const [archived, setArchived] = useState(false);
+  const items = new Map<string, GiftItem[]>();
+  for (const gift of gifts) {
+    const group = items.get(gift.child_id);
+    if (group) group.push(gift);
+    else items.set(gift.child_id, [gift]);
+  }
+  function matchesGift(gift: GiftItem) {
+    if (!gift.active && !archived || kind && gift.kind !== kind) return false;
+    if (giftFilter === "purchased") return !!gift.purchase_source;
+    if (giftFilter === "unbought") return !gift.purchase_source;
+    if (giftFilter === "received") return gift.received;
+    if (giftFilter === "outstanding") return !gift.received;
+    if (giftFilter === "assigned") return gift.donation_assigned;
+    return true;
+  }
   const [query, setQuery] = useState("");
   const [decision, setDecision] = useState(initialFilter === "review" ? "pending" : DECISIONS.some(([value]) => value === initialFilter) ? initialFilter : "");
   const [tree, setTree] = useState(initialFilter === "tree" ? "yes" : initialFilter === "approved" ? "no" : "");
@@ -66,12 +90,17 @@ export default function ChildrenTable({ rows, initialFilter = "" }: { rows: Row[
   const selectAll = useRef<HTMLInputElement>(null);
 
   const search = query.trim().toLowerCase();
+  const [minAge, maxAge] = age.split("-").map(Number);
   const visible = rows.filter((row) =>
     (!decision || row.decision === decision) &&
     (!tree || row.onTree === (tree === "yes")) &&
     matchesStatus(row, status) &&
-    (!search || [row.name, row.code, row.parent, row.sponsor].some((value) => value?.toLowerCase().includes(search))),
+    (!age || row.age !== null && row.age >= minAge && row.age <= maxAge) &&
+    (!gender || row.gender === gender) &&
+    ((!giftFilter && !kind) || items.get(row.id)?.some(matchesGift)) &&
+    (!search || [row.name, row.code, row.parent, row.sponsor, ...(items.get(row.id) ?? []).filter(matchesGift).map(giftLabel)].some((value) => value?.toLowerCase().includes(search))),
   );
+  const totals = giftCounts(visible.flatMap((row) => (items.get(row.id) ?? []).filter(matchesGift)));
   const checked = visible.filter((row) => selected.has(row.id));
   const approvable = checked.filter((row) => CAN_APPROVE.has(row.decision));
   const publishable = checked.filter((row) => row.decision === "approved" && !row.onTree && row.code);
@@ -129,8 +158,14 @@ export default function ChildrenTable({ rows, initialFilter = "" }: { rows: Row[
 
   return (
     <>
+      <div className="kpis">
+        <div className="kpi"><small>Matching gift requests</small><b>{totals.total}</b></div>
+        {([["purchased", "Purchased", totals.purchased], ["unbought", "Not purchased", totals.total - totals.purchased], ["received", "Received", totals.received], ["assigned", "Donation assigned", totals.covered]] as const).map(([value, label, count]) =>
+          <button key={value} type="button" className="kpi" aria-pressed={giftFilter === value} onClick={() => changeFilter(setGiftFilter, giftFilter === value ? "" : value)}><small>{label}</small><b>{count}</b></button>
+        )}
+      </div>
       <div className="toolbar">
-        <input type="search" aria-label="Search children" placeholder="Child name, angel code, parent or sponsor" value={query} disabled={disabled} onChange={(e) => changeFilter(setQuery, e.target.value)} />
+        <input type="search" aria-label="Search children" placeholder="Child, angel code, family, sponsor or gift" value={query} disabled={disabled} onChange={(e) => changeFilter(setQuery, e.target.value)} />
         <select aria-label="Decision" value={decision} disabled={disabled} onChange={(e) => changeFilter(setDecision, e.target.value)}>
           <option value="">All decisions</option>
           {DECISIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
@@ -144,10 +179,32 @@ export default function ChildrenTable({ rows, initialFilter = "" }: { rows: Row[
           <option value="">All sponsorship statuses</option>
           {STATUS_FILTERS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
+        <select aria-label="Gift status" value={giftFilter} onChange={(e) => changeFilter(setGiftFilter, e.target.value)}>
+          <option value="">Any gift status</option>
+          <option value="purchased">Purchased</option><option value="unbought">Not purchased</option>
+          <option value="received">Received</option><option value="outstanding">Not received</option><option value="assigned">Donation assigned</option>
+        </select>
         <button type="button" className="btn ghost sm" disabled={disabled} onClick={() => {
-          setQuery(""); setDecision(""); setTree(""); setStatus(""); setSelected(new Set());
+          setQuery(""); setDecision(""); setTree(""); setStatus(""); setGiftFilter(""); setKind(""); setAge(""); setGender(""); setArchived(false); setSelected(new Set());
         }}>Clear filters</button>
       </div>
+      <details>
+        <summary>More filters</summary>
+        <div className="toolbar">
+          <select aria-label="Age" value={age} onChange={(e) => changeFilter(setAge, e.target.value)}>
+            <option value="">All ages</option><option value="0-8">Up to 8</option><option value="9-12">9 to 12</option><option value="13-120">13 and up</option>
+          </select>
+          <select aria-label="Gender" value={gender} onChange={(e) => changeFilter(setGender, e.target.value)}>
+            <option value="">All genders</option><option>Girl</option><option>Boy</option><option>Other</option>
+          </select>
+          <select aria-label="Gift category" value={kind} onChange={(e) => changeFilter(setKind, e.target.value)}>
+            <option value="">All gift categories</option>
+            {Object.entries(GIFT_KIND).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+          </select>
+          <label><input type="checkbox" checked={archived} onChange={(e) => { setArchived(e.target.checked); setSelected(new Set()); }} /> Show removed requests</label>
+        </div>
+      </details>
+      {giftEdit.err && <p className="err" role="alert">{giftEdit.err}</p>}
       <div className="acts children-bulk" aria-label="Bulk actions" role="group">
         <span className="muted">{visible.length} of {rows.length} children · {checked.length} selected</span>
         <button type="button" className="btn sm green" disabled={disabled || !approvable.length} onClick={() => run("approve")}>
@@ -162,7 +219,7 @@ export default function ChildrenTable({ rows, initialFilter = "" }: { rows: Row[
       {visible.length === 0 ? (
         <div className="empty">
           <h3>{rows.length ? "No matching children" : "No children yet"}</h3>
-          <p>{rows.length ? "Try changing the search or clearing the filters." : "Enter a household or import an email to add children."}</p>
+          <p>{rows.length ? "Try changing the search or clearing the filters." : "Add a family or import an email to add children."}</p>
         </div>
       ) : (
         <div className="tw">
@@ -171,14 +228,19 @@ export default function ChildrenTable({ rows, initialFilter = "" }: { rows: Row[
               <tr>
                 <th scope="col"><input ref={selectAll} type="checkbox" aria-label="Select all visible children" checked={allChecked} disabled={disabled} onChange={(e) => setSelected(new Set(e.target.checked ? visible.map((row) => row.id) : []))} /></th>
                 <th scope="col">Child (private)</th><th scope="col">Angel Code</th><th scope="col">Family</th>
-                <th scope="col">Decision</th><th scope="col">On The Tree</th><th scope="col">Sponsorship</th><th scope="col">Actions</th>
+                <th scope="col">Decision</th><th scope="col">On The Tree</th><th scope="col">Sponsorship</th><th scope="col">Gift progress</th><th scope="col">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {visible.map((row) => (
-                <tr key={row.id}>
+              {visible.map((row) => {
+                const requests = items.get(row.id) ?? [];
+                const counts = giftCounts(requests);
+                const shown = requests.filter(matchesGift);
+                return <Fragment key={row.id}>
+                <tr>
                   <td><input type="checkbox" aria-label={`Select ${row.name}`} checked={selected.has(row.id)} disabled={disabled} onChange={(e) => {
-                    const checked = e.target.checked;
+                    const totals = giftCounts(visible.flatMap((row) => (items.get(row.id) ?? []).filter(matchesGift)));
+  const checked = e.target.checked;
                     setSelected((current) => {
                       const next = new Set(current);
                       if (checked) next.add(row.id);
@@ -194,7 +256,7 @@ export default function ChildrenTable({ rows, initialFilter = "" }: { rows: Row[
                   </td>
                   <td className="numeric-text">{row.code || "—"}</td>
                   <td>
-                    <Link href={`/admin/households/${row.familyId}`}>{row.parent || "View household"}</Link><br />
+                    <Link href={`/admin/households/${row.familyId}`}>{row.parent || "View family"}</Link><br />
                     <span className="muted">{[row.phone, row.siblings ? `${row.siblings} sibling${row.siblings === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ")}</span>
                   </td>
                   <td>
@@ -203,12 +265,27 @@ export default function ChildrenTable({ rows, initialFilter = "" }: { rows: Row[
                   </td>
                   <td><TreeToggle childId={row.id} on={row.onTree} canPublish={row.decision === "approved" && !!row.code} /></td>
                   <td>{row.onTree ? <><span className={`pill ${row.status}`}>{STATUS_LABEL[row.status]}</span><br /><span className="muted">{row.sponsor || "No sponsor yet"}</span></> : <span className="muted">{row.sponsor || "—"}</span>}</td>
-                  <td>{row.onTree ?
+                  <td>{counts.purchased}/{counts.total} purchased<br /><span className="muted">{counts.received}/{counts.total} received</span></td>
+                  <td><div className="acts">
+                    <button type="button" className="btn sm ghost" aria-expanded={expanded === row.id} onClick={() => setExpanded(expanded === row.id ? "" : row.id)}>{expanded === row.id ? "Hide gifts" : "View gifts"}</button>
+                    {row.onTree ?
                     <StatusButtons id={row.id} status={row.status} gift={status === "giftcard" ? row.giftCardStatus : "none"} compact /> :
                     <Link className="btn sm ghost" href={`/admin/households/${row.familyId}`}>{row.decision === "approved" ? "Manage" : "Decide"}</Link>}
-                  </td>
+                  </div></td>
                 </tr>
-              ))}
+                {expanded === row.id && <tr className="child-gift-detail"><td colSpan={9}>
+                  <h3>{row.name} · Gift checklist</h3>
+                  <div className="acts">
+                    <Link href={`/admin/children/${row.id}`} className="btn sm ghost">Open child record</Link>
+                    <Link href={`/admin/households/${row.familyId}`} className="btn sm ghost">View family</Link>
+                  </div>
+                  {shown.length ? <table>
+                    <thead><tr><th>Item</th><th>Category</th><th>Purchase source</th><th>Received</th><th>Donation assigned</th></tr></thead>
+                    <tbody>{shown.map((gift) => <tr key={gift.id}><GiftItemCells item={gift} busy={giftEdit.busy} action={giftEdit.action} /></tr>)}</tbody>
+                  </table> : <p className="muted">No matching gift requests.</p>}
+                </td></tr>}
+                </Fragment>;
+              })}
             </tbody>
           </table>
         </div>

@@ -17,6 +17,7 @@ type Kid = {
   ageUnsure:boolean;
   gender: string;
   tops: string;
+  coatSize: string;
   bottoms: string;
   shoes: string;
   wants: string[];
@@ -112,6 +113,7 @@ function toKid(c: DraftFamily["children"][number], canvases: HTMLCanvasElement[]
     ageUnsure:!!c.ageUnsure,
     gender: c.gender || "",
     tops: c.tops,
+    coatSize: c.coatSize ?? "",
     bottoms: c.bottoms,
     shoes: c.shoes,
     wants: c.wants,
@@ -229,6 +231,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
           ageUnsure:k.ageUnsure,
           gender: k.gender || null,
           tops: k.tops,
+          coatSize: k.coatSize,
           bottoms: k.bottoms,
           shoes: k.shoes,
           wants: cleanListItems(k.wants),
@@ -247,7 +250,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
     if (!res.ok) return setFam(f.key, { state: "error", msg: j.error || "Couldn't save" });
     const made = (j.created || []).map((c: { name: string; no: number }) => `${c.name} (No. ${String(c.no).padStart(2, "0")})`).join(", ");
     const noList = kids.filter((k) => cleanListItems(k.wants).length + cleanListItems(k.needs).length === 0).map((k) => k.fullName.trim());
-    const text = `${f.parentName.trim() || "Family"}: ${made || "Nothing new"} saved to Households for review${j.merged ? ", joined an existing family" : ""}${j.skipped?.length ? `. Skipped duplicates: ${j.skipped.join(", ")}` : ""}.${noList.length ? ` Note: ${noList.join(", ")} ${noList.length === 1 ? "has" : "have"} no wants or needs listed yet. Add them on the child's page when you have them.` : ""}`;
+    const text = `${f.parentName.trim() || "Family"}: ${made || "Nothing new"} saved to Families for review${j.merged ? ", joined an existing family" : ""}${j.skipped?.length ? `. Skipped duplicates: ${j.skipped.join(", ")}` : ""}.${noList.length ? ` Note: ${noList.join(", ")} ${noList.length === 1 ? "has" : "have"} no wants or needs listed yet. Add them on the child's page when you have them.` : ""}`;
     // A saved family leaves this page; the confirmation stays above until the page is closed.
     setFams((p) => p.filter((x) => x.key !== f.key));
     setDone((d) => [{ key: f.key, text }, ...d]);
@@ -280,7 +283,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
       {sample&&<div className="banner-warn">Review build: email or PDF reading returns a fixed fictional example, not the contents of your document. Use only fictional data in this preview. CSV reads the actual rows locally.</div>}
       {err && <div className="err" role="alert">{err}</div>}
 
-      {done.length > 0 && <div className="ok" role="status" style={{ marginBottom: 12 }}>{done.map((d) => <p key={d.key}>{d.text}</p>)}<p><a href="/admin/households">Open Households to review</a></p></div>}
+      {done.length > 0 && <div className="ok" role="status" style={{ marginBottom: 12 }}>{done.map((d) => <p key={d.key}>{d.text}</p>)}<p><a href="/admin/households">Open Families to review</a></p></div>}
       {fams.map((f) => (
         <section className="draft" key={f.key}>
           <div className="page-h" style={{ margin: 0 }}>
@@ -316,8 +319,9 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
                   <div className="field"><label className="lbl">Age <span style={{marginLeft:8}}><input type="checkbox" checked={k.ageUnsure} onChange={e=>setKid(f.key,k.key,{ageUnsure:e.target.checked})}/> Unclear</span></label><input type="number" min={0} max={120} value={k.age} onChange={(e) => setKid(f.key, k.key, { age: e.target.value })} /></div>
                   <div className="field"><label className="lbl">Gender</label><select value={k.gender} onChange={(e) => setKid(f.key, k.key, { gender: e.target.value })}><option value="">Not stated</option><option>Girl</option><option>Boy</option><option>Other</option></select></div>
                 </div>
-                <div className="three aligned-fields">
+                <div className="size-fields aligned-fields">
                   <SizeField kind="shirt" value={k.tops} onChange={(tops) => setKid(f.key, k.key, { tops })} />
+                  <SizeField kind="coat" value={k.coatSize} onChange={(coatSize) => setKid(f.key, k.key, { coatSize })} />
                   <SizeField kind="pants" value={k.bottoms} onChange={(bottoms) => setKid(f.key, k.key, { bottoms })} />
                   <SizeField kind="shoes" value={k.shoes} onChange={(shoes) => setKid(f.key, k.key, { shoes })} />
                 </div>
@@ -333,7 +337,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
           ))}
 
           <div style={{ borderTop: "2px dotted var(--line)", marginTop: 14, paddingTop: 12 }}>
-            <p className="muted" style={{ fontSize: ".86rem", marginBottom: 8 }}>Children are saved as <b>Needs review</b>. The season age limit is applied automatically; approve and publish them from Households. Photos stay with organizers.</p>
+            <p className="muted" style={{ fontSize: ".86rem", marginBottom: 8 }}>Children are saved as <b>Needs review</b>. The season age limit is applied automatically; approve and publish them from Families. Photos stay with organizers.</p>
             {f.msg && <div className={f.state === "saved" ? "ok" : "err"} role="status">{f.msg}</div>}
             <div className="acts">
               <button className="btn" onClick={() => save(f)} disabled={f.state === "saving" || f.state === "saved"}>{f.state === "saved" ? "Saved" : "Save family"}</button>

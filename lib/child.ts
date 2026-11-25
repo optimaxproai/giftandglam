@@ -23,6 +23,7 @@ export function toPublic(c: ChildRow, all: ChildRow[]): PublicChild {
     age: c.age,
     gender: c.gender,
     tops: c.tops,
+    coat_size: c.coat_size ?? null,
     bottoms: c.bottoms,
     shoes: c.shoes,
     wants: c.wants,
