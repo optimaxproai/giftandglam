@@ -248,10 +248,13 @@ button.kpi[aria-pressed="true"] { border-color: var(--pine); background: var(--p
   .custom-preview { overflow-x: auto; padding: 10px; margin: -10px; }
 }
 .sheet { width: 8.5in; height: 11in; position: relative; background: #fff; box-shadow: 0 2px 14px rgba(0, 0, 0, .22); overflow: hidden; color: #000; flex: none; }
-.lab { position: absolute; box-sizing: border-box; padding: .08in .14in; display: flex; flex-direction: column; justify-content: center; overflow: hidden; line-height: 1.15; }
+.lab { position: absolute; box-sizing: border-box; padding: 0 !important; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; line-height: 1.12; text-align: center; background: radial-gradient(circle at 12% 30%, #f3e1a7 0 1.5px, transparent 2px) 0 0 / .32in .32in, radial-gradient(circle at 62% 70%, #f3e1a7 0 1.2px, transparent 1.8px) 0 0 / .32in .32in, #fffaf0; -webkit-print-color-adjust: exact; print-color-adjust: exact; color: #1d2623; }
+.lab-band { flex: none; height: .17in; background: linear-gradient(135deg, #e6b440 25%, transparent 25%) -.085in 0 / .17in .17in, linear-gradient(225deg, #e6b440 25%, transparent 25%) -.085in 0 / .17in .17in, linear-gradient(315deg, #b01c3a 25%, transparent 25%) 0 0 / .17in .17in, linear-gradient(45deg, #b01c3a 25%, transparent 25%) 0 0 / .17in .17in, #14573a; border-top: .03in solid #e6b440; border-bottom: .03in solid #e6b440; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.lab-body { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: .01in; padding: .04in .1in; min-height: 0; }
+.lab .n { font-family: Georgia, "Times New Roman", serif; font-weight: 800; color: #14573a; letter-spacing: .01em; max-width: 100%; white-space: nowrap; }
+.lab .c { font-weight: 800; letter-spacing: .05em; color: #b01c3a; font-variant-numeric: lining-nums tabular-nums; }
+.lab .m { font-weight: 700; color: #5b4a1a; }
 .lab.cut { border: 1px dashed #9aa5a1; }
-.lab .c { font-weight: 800; letter-spacing: .03em; }
-.lab .l { font-weight: 600; }
 @media print {
   @page { size: letter; margin: 0; }
   .sky, .demo, .foot, .no-print, .page-h { display: none !important; }
@@ -310,3 +313,8 @@ button.kpi[aria-pressed="true"] { border-color: var(--pine); background: var(--p
 .step-group { margin: 16px 0 0; padding-top: 12px; border-top: 2px solid var(--line); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 .step-clear .step-group { border-top: 2px dashed var(--line); margin-bottom: 8px; }
 @media (prefers-reduced-motion: reduce) { .sponsorship-panel .switch, .sponsorship-panel .switch i { transition: none; } }
+
+.lab-body { position: relative; }
+.lab-body::before { content: ""; position: absolute; inset: .05in .07in; border: .02in solid #e6b440; border-radius: .08in; pointer-events: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.lab .c::before, .lab .c::after { content: "\2726"; color: #e6b440; font-size: .7em; margin: 0 .35em; vertical-align: .08em; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+@media print { .lab, .lab-band, .lab-body::before, .lab .c::before, .lab .c::after { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }

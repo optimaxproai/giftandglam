@@ -5,6 +5,8 @@ import { SiteShell } from "@/components/Festive";
 import { Ornament } from "@/components/Ornament";
 import ChildEditor from "@/components/admin/ChildEditor";
 import SponsorshipPanel from "@/components/admin/SponsorshipPanel";
+import { getCampaign } from "@/lib/campaign";
+import { displaySponsorName, donorNames } from "@/lib/sponsorDisplay";
 import { requireAdmin } from "@/lib/auth";
 import { allChildren } from "@/lib/data";
 import { onTree, pad } from "@/lib/child";
@@ -19,6 +21,7 @@ export default async function AdminChild({ params }: { params: { id: string } })
   const c = all.find((x) => x.id === params.id);
   if (!c) notFound();
   const fam = c.family;
+  const donors = donorNames(await (await getCampaign()).store.listDonationOffers());
   const onPublicTree = onTree(c);
   const sibs = all.filter((x) => x.family_id === c.family_id && x.id !== c.id);
 
@@ -58,7 +61,7 @@ export default async function AdminChild({ params }: { params: { id: string } })
             )}
             {fam && <p className="muted" style={{ marginTop: 10, fontSize: ".8rem" }}>Received {new Date(fam.created_at).toLocaleDateString()}{fam.source_label ? ` from ${fam.source_label}` : ""}</p>}
           </div>
-          <SponsorshipPanel id={c.id} status={c.status} gift={c.gift_card_status as "none" | "pledged" | "received"} sponsor={c.sponsor ? { name: c.sponsor.name, email: c.sponsor.email, phone: c.sponsor.phone, adopted: c.claimed_at ? new Date(c.claimed_at).toLocaleDateString() : null } : null} />
+          <SponsorshipPanel id={c.id} status={c.status} gift={c.gift_card_status as "none" | "pledged" | "received"} sponsor={c.sponsor ? { name: displaySponsorName(c.sponsor, donors).name, email: c.sponsor.email, phone: c.sponsor.phone, adopted: c.claimed_at ? new Date(c.claimed_at).toLocaleDateString() : null } : null} />
           {readGiftCards(c).length > 0 && <div className="panel"><h3 style={{ marginBottom: 6 }}>Gift cards requested</h3><ul className="list">{readGiftCards(c).map((gift, i) => <li key={i}>${gift.amount} {gift.store}</li>)}</ul></div>}
         </div>
       </div>

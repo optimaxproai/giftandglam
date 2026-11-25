@@ -4,13 +4,15 @@ import ChildrenTable from "@/components/admin/ChildrenTable";
 import { requireAdmin } from "@/lib/auth";
 import { getCampaign } from "@/lib/campaign";
 import GiftManagement from "@/components/admin/GiftManagement";
+import { displaySponsorName, donorNames } from "@/lib/sponsorDisplay";
 
 export const dynamic = "force-dynamic";
 
 export default async function Children({ searchParams }: { searchParams: { filter?: string; view?: string } }) {
   await requireAdmin();
   const { store } = await getCampaign();
-  const [children, gifts] = await Promise.all([store.list(), store.listGiftItems()]);
+  const [children, gifts, offers] = await Promise.all([store.list(), store.listGiftItems(), store.listDonationOffers()]);
+  const donors = donorNames(offers);
   const byGift = searchParams.view === "gift";
   const familySizes = new Map<string, number>();
   for (const c of children) familySizes.set(c.family_id, (familySizes.get(c.family_id) ?? 0) + 1);
@@ -31,7 +33,7 @@ export default async function Children({ searchParams }: { searchParams: { filte
     reason: c.decision_reason,
     onTree: c.approved,
     status: c.status,
-    sponsor: c.sponsor?.name ?? "",
+    sponsor: c.sponsor ? displaySponsorName(c.sponsor, donors).name : "",
     giftCardStatus: c.gift_card_status,
   }));
 
