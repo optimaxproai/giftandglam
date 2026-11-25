@@ -8,6 +8,8 @@ import CampaignImpact from "@/components/CampaignImpact";
 import ShareCampaign from "@/components/ShareCampaign";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+export const revalidate = 0;
 export const metadata = { title: "Paradigm & Oh MyMy’s Gift & Glam — 10th Annual Holiday Giving Celebration" };
 
 export default async function Home({searchParams}: {searchParams?: {angel?: string}}) {
