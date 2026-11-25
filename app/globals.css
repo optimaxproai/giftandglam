@@ -251,3 +251,12 @@ button.kpi[aria-pressed="true"] { border-color: var(--pine); background: var(--p
   .sheet { box-shadow: none !important; margin: 0 !important; page-break-after: always; break-after: page; }
   .sheet:last-child { page-break-after: auto; break-after: auto; }
 }
+
+.tree-toggle { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tree-toggle .switch { position: relative; width: 44px; height: 26px; border-radius: 99px; border: 0; background: var(--line); cursor: pointer; padding: 0; flex: none; transition: background .15s; }
+.tree-toggle .switch i { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px #0004; transition: transform .15s; }
+.tree-toggle .switch.on { background: var(--pine); }
+.tree-toggle .switch.on i { transform: translateX(18px); }
+.tree-toggle .switch:disabled { opacity: .55; cursor: not-allowed; }
+.tree-toggle-label { font-weight: 600; font-size: .86rem; }
+@media (prefers-reduced-motion: reduce) { .tree-toggle .switch, .tree-toggle .switch i { transition: none; } }

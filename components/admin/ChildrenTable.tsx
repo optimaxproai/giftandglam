@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { Ornament } from "@/components/Ornament";
 import StatusButtons from "@/components/admin/StatusButtons";
+import TreeToggle from "@/components/admin/TreeToggle";
 import { DECISION_LABEL, DECISION_PILL } from "@/lib/campaign/rules";
 import { STATUS_LABEL, type Decision, type Status } from "@/lib/types";
 
@@ -200,7 +201,7 @@ export default function ChildrenTable({ rows, initialFilter = "" }: { rows: Row[
                     <span className={`pill ${DECISION_PILL[row.decision]}`}>{DECISION_LABEL[row.decision]}</span>
                     {row.reason && <div className="muted child-decision-reason">{row.reason}</div>}
                   </td>
-                  <td><span className={`pill ${row.onTree ? "available" : "neutral"}`}>{row.onTree ? "Yes" : "No"}</span></td>
+                  <td><TreeToggle childId={row.id} on={row.onTree} canPublish={row.decision === "approved" && !!row.code} /></td>
                   <td>{row.onTree ? <><span className={`pill ${row.status}`}>{STATUS_LABEL[row.status]}</span><br /><span className="muted">{row.sponsor || "No sponsor yet"}</span></> : <span className="muted">{row.sponsor || "—"}</span>}</td>
                   <td>{row.onTree ?
                     <StatusButtons id={row.id} status={row.status} gift={status === "giftcard" ? row.giftCardStatus : "none"} compact /> :
