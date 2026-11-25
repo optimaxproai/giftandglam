@@ -264,7 +264,7 @@ export default function ChildrenTable({ rows, gifts, initialFilter = "" }: { row
                     {row.reason && <div className="muted child-decision-reason">{row.reason}</div>}
                   </td>
                   <td><TreeToggle childId={row.id} on={row.onTree} canPublish={row.decision === "approved" && !!row.code} /></td>
-                  <td>{row.onTree ? <><span className={`pill ${row.status}`}>{STATUS_LABEL[row.status]}</span><br /><span className="muted">{row.sponsor || "No sponsor yet"}</span></> : <span className="muted">{row.sponsor || "—"}</span>}</td>
+                  <td>{row.onTree ? <><span className={`pill ${row.status}`}>{STATUS_LABEL[row.status]}</span><br /><span className="muted">{row.sponsor || "Sponsor TBD"}</span></> : <span className="muted">{row.sponsor || "—"}</span>}</td>
                   <td>{counts.purchased}/{counts.total} purchased<br /><span className="muted">{counts.received}/{counts.total} received</span></td>
                   <td><div className="acts">
                     <button type="button" className="btn sm ghost" aria-expanded={expanded === row.id} onClick={() => setExpanded(expanded === row.id ? "" : row.id)}>{expanded === row.id ? "Hide gifts" : "View gifts"}</button>
