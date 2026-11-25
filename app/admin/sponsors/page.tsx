@@ -7,19 +7,46 @@ import { pad } from "@/lib/child";
 import { STATUS_LABEL } from "@/lib/types";
 import SponsorContacts from "@/components/admin/SponsorContacts";
 import { getCampaign } from "@/lib/campaign";
+import DonationManagement from "@/components/admin/DonationManagement";
 
 export const dynamic = "force-dynamic";
 
-export default async function Sponsors() {
+export default async function SponsorsAndDonations({ searchParams }: { searchParams: { tab?: string } }) {
   await requireAdmin();
+  const donations = searchParams.tab === "donations";
+
+  return (
+    <SiteShell admin>
+      <div className="page-h"><h2>Sponsors &amp; Donations</h2></div>
+      <nav className="tabs" aria-label="Sponsors and donations views">
+        <Link href="/admin/sponsors" className={donations ? "" : "active"} aria-current={donations ? undefined : "page"}>Sponsors</Link>
+        <Link href="/admin/sponsors?tab=donations" className={donations ? "active" : ""} aria-current={donations ? "page" : undefined}>Donations</Link>
+      </nav>
+      {donations ? <DonationsPanel /> : <SponsorsPanel />}
+    </SiteShell>
+  );
+}
+
+async function DonationsPanel() {
+  const offers = await (await getCampaign()).store.listDonationOffers();
+  return (
+    <>
+      <h3>Donations &amp; Volunteers</h3>
+      <p className="muted">Review contribution preferences, verify received amounts, and follow up on offers of help.</p>
+      <DonationManagement offers={offers} />
+    </>
+  );
+}
+
+async function SponsorsPanel() {
   const rows = (await allChildren()).filter((c) => c.sponsor).sort((a, b) => a.no - b.no);
   const contacts = await (await getCampaign()).store.listSponsorContacts();
   const dl = daysUntil(DRIVE.returnBy);
 
   return (
-    <SiteShell admin>
+    <>
       <div className="page-h">
-        <div><h2>Sponsors</h2><p className="muted">Contact details are visible to organizers only. {dl >= 0 ? `${dl} days to the ${DRIVE.returnByLabel} return deadline.` : `The ${DRIVE.returnByLabel} deadline has passed.`}</p></div>
+        <p className="muted">Contact details are visible to organizers only. {dl >= 0 ? `${dl} days to the ${DRIVE.returnByLabel} return deadline.` : `The ${DRIVE.returnByLabel} deadline has passed.`}</p>
       </div>
       <SponsorContacts contacts={contacts} />
       <h3 style={{ marginBottom: 10 }}>Angel sponsorships</h3>
@@ -49,6 +76,6 @@ export default async function Sponsors() {
           </table>
         </div>
       )}
-    </SiteShell>
+    </>
   );
 }

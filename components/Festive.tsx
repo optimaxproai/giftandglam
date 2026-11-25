@@ -78,8 +78,7 @@ export function SiteShell({ children, hero, admin = false }: { children: ReactNo
                   <Link href="/admin">Overview</Link>
                   <Link href="/admin/households">Families</Link>
                   <Link href="/admin/children">Children &amp; Gifts</Link>
-                  <Link href="/admin/sponsors">Sponsors</Link>
-                  <Link href="/admin/donations">Donations</Link>
+                  <Link href="/admin/sponsors">Sponsors &amp; Donations</Link>
                   <div className="organizer-tools-group">
                     <details className="organizer-tools">
                       <summary>Organizer Tools</summary>

@@ -71,7 +71,7 @@ export default async function AdminHome() {
             {count.available > 0 && <li><b>{count.available} angels</b> still need a sponsor.</li>}
             {out > 0 && <li><b>{out} angels</b> have gifts still with sponsors. <Link href="/admin/sponsors">Follow up</Link></li>}
             {giftGaps>0&&<li><b>{giftGaps} gift requests</b> have no recorded purchase or receipt. <Link href="/admin/children?view=gift">Review gifts</Link></li>}
-            {pendingOffers>0&&<li><b>{pendingOffers} donation or volunteer offers</b> need follow-up. <Link href="/admin/donations">Review offers</Link></li>}
+            {pendingOffers>0&&<li><b>{pendingOffers} donation or volunteer offers</b> need follow-up. <Link href="/admin/sponsors?tab=donations">Review offers</Link></li>}
             {!s.households.review && !approvedNotPublished && !count.available && !out && !giftGaps&&!pendingOffers && <li className="muted">Nothing is waiting on you.</li>}
           </ul>
           <div className="acts" style={{ marginTop: 14 }}><Link className="btn sm ghost" href="/admin/print">Print labels</Link></div>
