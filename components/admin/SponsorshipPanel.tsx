@@ -66,7 +66,7 @@ export default function SponsorshipPanel({ id, status, gift, sponsor }: { id: st
       {sponsor ? (
         <div className="sponsor-box"><b>{sponsor.name}</b><span>{sponsor.email}</span><span>{sponsor.phone || "No phone"}</span>{sponsor.adopted && <span className="muted">Adopted {sponsor.adopted}</span>}</div>
       ) : (
-        <div className="sponsor-box"><b>No sponsor yet</b><span className="muted">Sponsors adopt on the public tree. You can also turn on Sponsored yourself.</span></div>
+        <div className="sponsor-box"><b>Sponsor TBD</b><span className="muted">Sponsors adopt on the public tree. You can also turn on Sponsored yourself.</span></div>
       )}
       <ul className="step-list">
         {STEPS.map((s, i) => (

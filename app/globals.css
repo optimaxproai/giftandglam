@@ -324,3 +324,6 @@ button.kpi[aria-pressed="true"] { border-color: var(--pine); background: var(--p
 .overview-cols .panel li { text-wrap: pretty; }
 @media (max-width: 760px) { .cols.overview-cols { grid-template-columns: 1fr; } }
 tr.fam-first > td { border-top: 2px solid var(--line); }
+
+td.check-cell { text-align: center; width: 1%; white-space: nowrap; }
+td.check-cell input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--pine); cursor: pointer; }
