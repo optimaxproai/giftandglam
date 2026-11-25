@@ -71,6 +71,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
 .nav-links a { color: #e8f6ef; text-decoration: none; padding: 6px 12px; border-radius: 999px; font-weight: 600; font-size: .88rem; }
 .nav-links a:hover { background: rgba(255, 255, 255, .14); }
+.sky:has(.organizer-tools[open]) { overflow: visible; z-index: 3; }
 .organizer-tools-group { display: flex; gap: 6px; }
 .organizer-tools { position: relative; }
 .organizer-tools summary { color: #e8f6ef; padding: 6px 12px; border-radius: 999px; font-weight: 600; font-size: .88rem; cursor: pointer; }
