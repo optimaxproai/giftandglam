@@ -254,7 +254,7 @@ button.kpi[aria-pressed="true"] { border-color: var(--pine); background: var(--p
 .lab .n { font-family: Georgia, "Times New Roman", serif; font-weight: 800; color: #14573a; letter-spacing: .01em; max-width: 100%; white-space: nowrap; }
 .lab .c { font-weight: 800; letter-spacing: .05em; color: #b01c3a; font-variant-numeric: lining-nums tabular-nums; }
 .lab .m { font-weight: 700; color: #5b4a1a; }
-.lab.cut { border: 1px dashed #9aa5a1; }
+.lab.cut { outline: 1px dashed #9aa5a1; outline-offset: -1px; }
 @media print {
   @page { size: letter; margin: 0; }
   .sky, .demo, .foot, .no-print, .page-h { display: none !important; }
@@ -333,3 +333,43 @@ tr.notes-row > td { padding-top: 0; border-top: 0; }
 tr.notes-row textarea { min-height: 72px; }
 tr.notes-row .field { grid-template-columns: minmax(0, 1fr); width: 100%; }
 tr.notes-row textarea { display: block; width: 100%; max-width: 100%; min-width: 0; }
+
+/* ---------- label designs (Woven is the base style above) ---------- */
+.design-picker { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.design-opt { border: 2px solid var(--line); border-radius: 14px; background: #fff; padding: 10px; cursor: pointer; text-align: left; font: inherit; display: grid; gap: 8px; align-content: start; }
+.design-opt:hover { border-color: #9fbdb0; }
+.design-opt[aria-checked="true"] { border-color: var(--pine); background: #f0f8f4; box-shadow: 0 0 0 3px #14573a22; }
+.design-opt small { color: var(--muted); }
+.design-name { font-weight: 800; font-size: .9rem; display: flex; justify-content: space-between; gap: 6px; align-items: center; }
+.design-name i { font-style: normal; font-size: .7rem; background: var(--pine); color: #fff; border-radius: 99px; padding: 1px 8px; }
+.design-words { display: grid; place-items: center; min-height: 116px; border: 2px dashed #9fbdb0; border-radius: 10px; font-weight: 800; color: var(--pine); text-align: center; padding: 10px; background: repeating-linear-gradient(135deg, #f4faf7 0 10px, #fff 10px 20px); }
+.design-thumb { width: 100%; height: 116px; overflow: hidden; }
+.design-thumb .lab { transform: scale(.9); transform-origin: top left; }
+@media (max-width: 520px) { .design-thumb { height: 92px; } .design-thumb .lab { transform: scale(.7); } }
+
+/* Candy Cane and Holly */
+.lab.d-candy { background: linear-gradient(#fff, #fff) padding-box, repeating-linear-gradient(45deg, #c8102e 0 .075in, #fff .075in .15in) border-box; border: .1in solid transparent; }
+.lab.d-candy .lab-band { display: none; }
+.lab.d-candy .lab-body::before { inset: auto; left: .04in; top: .04in; width: .3in; height: .3in; border: 0; border-radius: 0; background: radial-gradient(circle at 30% 72%, #c8102e 0 17%, transparent 19%), radial-gradient(circle at 62% 76%, #c8102e 0 17%, transparent 19%), radial-gradient(ellipse at 50% 36%, #14573a 0 38%, transparent 40%); }
+.lab.d-candy .lab-body::after { content: ""; position: absolute; right: .04in; bottom: .04in; width: .3in; height: .3in; transform: rotate(180deg); background: radial-gradient(circle at 30% 72%, #c8102e 0 17%, transparent 19%), radial-gradient(circle at 62% 76%, #c8102e 0 17%, transparent 19%), radial-gradient(ellipse at 50% 36%, #14573a 0 38%, transparent 40%); }
+.lab.d-candy .n { color: #14573a; } .lab.d-candy .c { color: #c8102e; } .lab.d-candy .m { color: #444; }
+.lab.d-candy .c::before, .lab.d-candy .c::after { content: none; }
+
+/* Gold Star Night */
+.lab.d-night { background: radial-gradient(circle at 15% 25%, #ffffff66 0 1.4px, transparent 2px) 0 0 / .3in .3in, radial-gradient(circle at 70% 65%, #e6b440aa 0 1.6px, transparent 2.2px) 0 0 / .37in .37in, linear-gradient(#0f4a31, #0a3624); border: .06in solid #e6b440; }
+.lab.d-night .lab-band { display: none; }
+.lab.d-night .lab-body::before { inset: .04in; border: .02in solid #e6b44099; border-radius: .03in; }
+.lab.d-night .n { color: #fff; } .lab.d-night .c { color: #f4cf6a; } .lab.d-night .m { color: #e8efe9; }
+.lab.d-night .c::before, .lab.d-night .c::after { content: "\2605"; color: #e6b440; font-size: .62em; }
+
+/* Unique family color (the Woven shape in each family's color) */
+.lab.d-family { background: color-mix(in srgb, var(--f) 12%, #fff); }
+.lab.d-family .lab-band { background: linear-gradient(135deg, #fff 25%, transparent 25%) -.085in 0 / .17in .17in, linear-gradient(225deg, #fff 25%, transparent 25%) -.085in 0 / .17in .17in, linear-gradient(315deg, #1d2623 25%, transparent 25%) 0 0 / .17in .17in, linear-gradient(45deg, #1d2623 25%, transparent 25%) 0 0 / .17in .17in, var(--f); border-top-color: var(--f); border-bottom-color: var(--f); }
+.lab.d-family .lab-body::before { border-color: var(--f); }
+.lab.d-family .n { color: color-mix(in srgb, var(--f) 70%, #000); } .lab.d-family .c { color: var(--f); } .lab.d-family .m { color: #444; }
+.lab.d-family .c::before, .lab.d-family .c::after { content: none; }
+@media print { .lab.d-candy, .lab.d-night, .lab.d-family { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+.family-legend { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; font-size: .82rem; }
+.family-legend span { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--line); border-radius: 99px; padding: 2px 10px; }
+.family-legend i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
