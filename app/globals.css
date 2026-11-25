@@ -115,7 +115,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .field { display: grid; gap: 5px; margin-bottom: 12px; }
 .field > label, .lbl { font-size: .82rem; font-weight: 700; }
 .field small { color: var(--muted); }
-.field textarea { min-height: 96px; resize: vertical; }
+.field textarea { min-height: 96px; resize: none; }
 .aligned-fields { align-items: end; }
 .aligned-fields .field { align-content: end; }
 .aligned-fields .field > input, .aligned-fields .field > select { min-height: 44px; height: 44px; width: 100%; }
@@ -327,3 +327,7 @@ tr.fam-first > td { border-top: 2px solid var(--line); }
 
 td.check-cell { text-align: center; width: 1%; white-space: nowrap; }
 td.check-cell input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--pine); cursor: pointer; }
+
+textarea { resize: none; }
+tr.notes-row > td { padding-top: 0; border-top: 0; }
+tr.notes-row textarea { min-height: 72px; }
