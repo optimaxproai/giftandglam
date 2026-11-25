@@ -133,6 +133,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
   const [paste, setPaste] = useState("");
   const [drag, setDrag] = useState(false);
   const [sample,setSample]=useState(false);
+  const [done,setDone]=useState<{key:string;text:string}[]>([]);
   const input = useRef<HTMLInputElement>(null);
 
   async function parse(label: string, canvases: HTMLCanvasElement[], text: string) {
@@ -215,7 +216,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
     for (const k of kids) {
       const n = cleanListItems(k.wants).length + cleanListItems(k.needs).length;
       if (!k.fullName.trim()) return setFam(f.key, { state: "error", msg: "Every child needs a name." });
-      if (n === 0) return setFam(f.key, { state: "error", msg: `${k.fullName} has no wants or needs yet.` });
+      void n; // A child with no wants or needs is noted after saving; it never blocks the family.
       if(k.giftCards.some(g=>g.store.trim()&&(!Number.isInteger(g.amount)||g.amount<5||g.amount>200))) return setFam(f.key,{state:"error",msg:`Confirm each gift card amount for ${k.fullName} ($5–$200) or remove that card.`});
     }
     setFam(f.key, { state: "saving", msg: "" });
@@ -248,11 +249,11 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
     const j = await res.json().catch(() => ({}));
     if (!res.ok) return setFam(f.key, { state: "error", msg: j.error || "Couldn't save" });
     const made = (j.created || []).map((c: { name: string; no: number }) => `${c.name} (No. ${String(c.no).padStart(2, "0")})`).join(", ");
-    setFam(f.key, {
-      state: "saved",
-      familyId: j.familyId,
-      msg: `${made || "Nothing new"} saved to Families for review${j.merged ? ", joined an existing family" : ""}${j.skipped?.length ? `. Skipped duplicates: ${j.skipped.join(", ")}` : ""}.`,
-    });
+    const noList = kids.filter((k) => cleanListItems(k.wants).length + cleanListItems(k.needs).length === 0).map((k) => k.fullName.trim());
+    const text = `${f.parentName.trim() || "Family"}: ${made || "Nothing new"} saved to Families for review${j.merged ? ", joined an existing family" : ""}${j.skipped?.length ? `. Skipped duplicates: ${j.skipped.join(", ")}` : ""}.${noList.length ? ` Note: ${noList.join(", ")} ${noList.length === 1 ? "has" : "have"} no wants or needs listed yet. Add them on the child's page when you have them.` : ""}`;
+    // A saved family leaves this page; the confirmation stays above until the page is closed.
+    setFams((p) => p.filter((x) => x.key !== f.key));
+    setDone((d) => [{ key: f.key, text }, ...d]);
   }
 
   return (
@@ -282,6 +283,7 @@ export default function ImportClient({demo=false}:{demo?:boolean}) {
       {sample&&<div className="banner-warn">Review build: email or PDF reading returns a fixed fictional example, not the contents of your document. Use only fictional data in this preview. CSV reads the actual rows locally.</div>}
       {err && <div className="err" role="alert">{err}</div>}
 
+      {done.length > 0 && <div className="ok" role="status" style={{ marginBottom: 12 }}>{done.map((d) => <p key={d.key}>{d.text}</p>)}<p><a href="/admin/households">Open Families to review</a></p></div>}
       {fams.map((f) => (
         <section className="draft" key={f.key}>
           <div className="page-h" style={{ margin: 0 }}>
