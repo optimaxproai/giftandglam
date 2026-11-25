@@ -272,18 +272,18 @@ button.kpi[aria-pressed="true"] { border-color: var(--pine); background: var(--p
 .sponsor-sizes { margin: 0 0 12px; }
 .sponsor-sizes dt { color: var(--muted); font-size: .71rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
 .sponsor-sizes dd { margin: 2px 0 0; }
-.gift-bag-label { max-width: 380px; margin: 16px auto 0; padding: 6px; border: 1px dashed #52635b; text-align: center; break-inside: avoid; }
-.gift-label-frame { display: grid; justify-items: center; gap: 3px; padding: 12px 16px; border: 3px double #155236; background: #fffaf0; color: #172a21; }
-.gift-label-stars { display: flex; align-items: center; gap: 9px; color: #85611b; font-size: .95rem; }
-.gift-label-stars span:nth-child(2) { color: #a9213d; font-size: 1.2rem; }
-.gift-label-brand { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: #155236; }
-.gift-label-caption { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .16em; }
-.gift-label-code { margin: 3px 0; padding: 2px 10px; border-block: 1px solid #9e711c; color: #a9213d; font-size: clamp(1.55rem, 7vw, 2.45rem); font-variant-numeric: lining-nums tabular-nums; line-height: 1.2; }
-.gift-label-date, .gift-label-bags { font-size: .82rem; }
-.gift-label-bags { margin-top: 6px; }
+.gift-bag-label { max-width: 380px; margin: 16px auto 0; padding: 12px; border: 1px dashed #595959; text-align: center; break-inside: avoid; background: repeating-linear-gradient(135deg, #cf1834 0 13px, #fff 13px 26px); }
+.gift-label-frame { position: relative; display: grid; justify-items: center; gap: 3px; padding: 14px 24px; border: 3px solid #d3156c; border-radius: 25px 18px 27px 20px; background: #fff; color: #171313; }
+.gift-label-brand { font-family: var(--font-display); font-size: 1.55rem; font-weight: 700; line-height: 1.2; }
+.gift-label-caption { font-size: .72rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; }
+.gift-label-code { padding: 3px 0; font-size: clamp(1.5rem, 7vw, 2.45rem); font-weight: 900; font-variant-numeric: lining-nums tabular-nums; line-height: 1.1; }
+.gift-label-bags { font-size: .85rem; font-weight: 700; }
+.gift-label-star { position: absolute; color: #d3156c; font-size: 2rem; line-height: 1; }
+.gift-label-star-left { top: 18%; left: -12px; }
+.gift-label-star-right { bottom: 14%; right: -12px; }
 @media print {
-  .gift-bag-label { width: 3.5in; max-width: 100%; border-color: #444; }
-  .gift-label-frame { background: #fff; border-color: #161616; color: #111; }
-  .gift-label-brand, .gift-label-stars, .gift-label-stars span:nth-child(2), .gift-label-code { color: #111; }
-  .gift-label-code { font-size: 28pt; border-color: #444; }
+  .gift-bag-label { width: 3.5in; max-width: 100%; background: #fff; }
+  .gift-label-frame { border-color: #171717; background: #fff; color: #111; }
+  .gift-label-star { color: #333; }
+  .gift-label-code { font-size: 28pt; }
 }

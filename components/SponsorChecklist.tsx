@@ -1,7 +1,6 @@
 "use client";
 import {useRouter} from "next/navigation";
 import {useState} from "react";
-import { DRIVE } from "@/lib/drive";
 import {giftCounts,giftLabel,GIFT_KIND,type GiftItem} from "@/lib/giftItems";
 
 export default function SponsorChecklist({token,items,editable,code,instructions}:{token:string;items:GiftItem[];editable:boolean;code:string;instructions:string}){
@@ -10,11 +9,11 @@ export default function SponsorChecklist({token,items,editable,code,instructions
   function download(){const url=URL.createObjectURL(new Blob([instructions],{type:"text/plain;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download=`GiftAndGlam-${code}.txt`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
   return <div className="sponsor-checklist"><div className="fact"><b>{counts.purchased} of {counts.total} gifts purchased</b><br/><small>{counts.received} of {counts.total} physically received</small></div><p className="muted" style={{fontSize:".85rem",marginBlock:8}}>Check each item you bought. Each change saves automatically. Three gifts are strongly suggested, not required.</p>{(["need","want","gift_card"] as const).map(kind=><div key={kind}>{active.some(g=>g.kind===kind)&&<><h4 style={{marginBlock:8}}>{GIFT_KIND[kind]}{kind==="gift_card"?"s (optional)":"s"}</h4>{active.filter(g=>g.kind===kind).map(g=><div key={g.id} className="gift-check"><label className="check" style={{marginBottom:0}}><input type="checkbox" checked={!!g.purchase_source} disabled={!editable||!!busy||g.received||g.donation_assigned||!!g.purchase_source&&g.purchase_source!=="sponsor"} onChange={e=>update(g.id,e.target.checked)}/><span>{giftLabel(g)}</span></label>{g.received?<span className="pill available">Received</span>:g.donation_assigned?<span className="pill neutral">Donation assigned</span>:g.purchase_source&&g.purchase_source!=="sponsor"?<span className="pill neutral">Organizer purchased</span>:null}</div>)}</>}</div>)}{err&&<p className="err" role="alert">{err}</p>}{busy&&<p className="muted" role="status">Saving…</p>}<div className="acts no-print" style={{marginTop:12}}><button className="btn ghost sm" onClick={download}>Download gift list</button><button className="btn ghost sm" onClick={()=>window.print()}>Print list &amp; gift label</button></div><div className="gift-bag-label" aria-label={`Gift bag label for angel ${code}`}>
       <div className="gift-label-frame">
-        <div className="gift-label-stars" aria-hidden="true"><span>✦</span><span>★</span><span>✦</span></div>
+        <span className="gift-label-star gift-label-star-left" aria-hidden="true">✦</span>
+        <span className="gift-label-star gift-label-star-right" aria-hidden="true">✦</span>
         <div className="gift-label-brand">Gift &amp; Glam</div>
         <div className="gift-label-caption">Angel gift bag</div>
         <b className="gift-label-code">{code}</b>
-        <div className="gift-label-date">Return unwrapped by <strong>{DRIVE.returnByLabel}</strong></div>
         <div className="gift-label-bags">Bag ______ of ______</div>
       </div>
     </div></div>
