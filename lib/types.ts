@@ -85,7 +85,7 @@ export const STATUS_LABEL: Record<Status, string> = {
   available: "Available",
   claimed: "Sponsored",
   purchased: "Shopping complete",
-  returned: "Gifts returned",
+  returned: "Gifts checked-in",
   given: "Given out",
 };
 export const STATUS_ORDER: Status[] = ["available", "claimed", "purchased", "returned", "given"];
