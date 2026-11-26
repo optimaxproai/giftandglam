@@ -26,6 +26,8 @@ export async function middleware(req: NextRequest) {
     }
     if (pathname === "/") return NextResponse.next();
   }
+  // Only organizer paths need a session lookup; public pages and forms skip the extra call.
+  if (!pathname.startsWith("/admin") && !pathname.startsWith("/api/admin") && !pathname.startsWith("/api/photo")) return NextResponse.next();
   let res = NextResponse.next({ request: req });
   const sb = createServerClient(url, anon, {
     cookies: {
