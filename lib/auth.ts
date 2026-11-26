@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { demoMode } from "./demo";
+import { isAdminUser, parseAdminEmails } from "./adminAccess";
 
 export function authClient() {
   const store = cookies();
@@ -19,20 +20,13 @@ export function authClient() {
   });
 }
 
-export function adminEmails(): string[] {
-  return (process.env.ANGEL_ADMIN_EMAILS || "")
-    .toLowerCase()
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
+export const adminEmails = () => parseAdminEmails(process.env.ANGEL_ADMIN_EMAILS);
 
 /** The signed-in organizer, or null. Only emails listed in ANGEL_ADMIN_EMAILS count. */
 export async function adminUser(): Promise<{ email: string } | null> {
   if (demoMode()) return { email: "demo@example.com" };
   const { data } = await authClient().auth.getUser();
-  const email = data.user?.email?.toLowerCase();
-  return email && adminEmails().includes(email) ? { email } : null;
+  return isAdminUser(data.user, adminEmails()) ? { email: data.user!.email!.toLowerCase() } : null;
 }
 
 export async function requireAdmin() {

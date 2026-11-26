@@ -25,7 +25,7 @@ const DESIGNS: { id: Design; name: string; note: string }[] = [
 /** Twelve colors that look different on paper and in print. Families past twelve start over; the last name is always printed. */
 const FAMILY_COLORS = ["#b01c3a", "#14573a", "#7a3fa0", "#d9822b", "#1f6fb2", "#0e8a8a", "#c2185b", "#6b7d1a", "#8b4a2b", "#4d4d9f", "#b98500", "#455a64"];
 const DESIGN_KEY = "angel-label-design";
-const SAMPLE = { family: "Fields", code: "G26-002", meta: "Girl · 16" };
+const SAMPLE = { family: "Sample", code: "G26-000", meta: "Girl · 8" };
 
 function Thumb({ design }: { design: Design }) {
   return (
